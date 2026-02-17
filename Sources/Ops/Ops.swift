@@ -49,5 +49,5 @@ public func wrapNestedOpException(_ triggerName: String, error: OpError) -> OpEr
 
 /// Wrap a runtime error into OpError.
 public func wrapRuntimeException(_ error: any Error) -> OpError {
-    return .executionFailed("Runtime error: \(error.localizedDescription)")
+    return .executionFailed("Runtime error: \(describeError(error))")
 }

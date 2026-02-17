@@ -13,7 +13,7 @@ final class OpsUtilTests: XCTestCase {
     func test_005_perform_with_auto_logging() async throws {
         let dry = DryContext()
         let wet = WetContext()
-        let result = try await perform(TestOp(), dry: dry, wet: wet)
+        let result = try await Ops.perform(TestOp(), dry: dry, wet: wet)
         XCTAssertEqual(result, 42)
     }
 
@@ -39,7 +39,8 @@ final class OpsUtilTests: XCTestCase {
     // TEST008: Verify wrapRuntimeException converts a standard error into an OpError.executionFailed
     func test_008_wrap_runtime_exception() {
         struct StdErr: Error, Sendable {
-            var localizedDescription: String { "test error" }
+            let message: String
+            init() { message = "test error" }
         }
         let wrapped = wrapRuntimeException(StdErr())
         if case .executionFailed(let msg) = wrapped {

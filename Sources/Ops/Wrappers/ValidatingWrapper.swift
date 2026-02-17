@@ -133,10 +133,10 @@ enum JSONSchemaValidator {
             switch typeStr {
             case "integer":
                 if let num = value as? NSNumber {
-                    if let maximum = schema["maximum"] as? Double, num.doubleValue > maximum {
+                    if let maximum = (schema["maximum"] as? NSNumber)?.doubleValue, num.doubleValue > maximum {
                         errors.append("/\(field): \(num) is greater than the maximum of \(maximum)")
                     }
-                    if let minimum = schema["minimum"] as? Double, num.doubleValue < minimum {
+                    if let minimum = (schema["minimum"] as? NSNumber)?.doubleValue, num.doubleValue < minimum {
                         errors.append("/\(field): \(num) is less than the minimum of \(minimum)")
                     }
                 }

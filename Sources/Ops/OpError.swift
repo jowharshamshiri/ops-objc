@@ -29,13 +29,24 @@ public enum OpError: Error, CustomStringConvertible, Sendable {
         case .trigger(let msg):
             return "Trigger error: \(msg)"
         case .other(let err):
-            return err.localizedDescription
+            return describeError(err)
         case ._loopContinue:
             return "Loop continue"
         case ._loopBreak:
             return "Loop break"
         }
     }
+}
+
+/// Extracts a human-readable description from an arbitrary Error.
+/// Swift's `localizedDescription` on `any Error` existentials bypasses custom property implementations
+/// and goes through Foundation's NSError bridge. Instead, prefer `LocalizedError.errorDescription` and
+/// fall back to `String(describing:)` which includes stored property values for custom struct errors.
+func describeError(_ error: any Error) -> String {
+    if let le = error as? LocalizedError, let desc = le.errorDescription {
+        return desc
+    }
+    return String(describing: error)
 }
 
 extension OpError: Equatable {

@@ -7,10 +7,10 @@ public struct ControlFlags: Sendable {
 }
 
 /// DryContext contains only serializable (JSON-compatible) data values.
-/// Thread-safe via a lock.
+/// Thread-safe via a lock. Values are stored as raw JSON Data internally.
 public final class DryContext: @unchecked Sendable {
     private let lock = NSLock()
-    private var _values: [String: Any] = [:]
+    private var _values: [String: Data] = [:]
     private var _controlFlags: ControlFlags = ControlFlags()
 
     public init() {}
@@ -25,34 +25,34 @@ public final class DryContext: @unchecked Sendable {
     // MARK: - Insert / Get
 
     public func insert<T: Encodable>(_ value: T, for key: String) {
-        guard let jsonObj = toJSONCompatible(value) else {
+        guard let data = try? JSONEncoder().encode(value) else {
             preconditionFailure("DryContext.insert: failed to serialize value for key '\(key)'")
         }
         lock.lock()
         defer { lock.unlock() }
-        _values[key] = jsonObj
+        _values[key] = data
     }
 
     public func get<T: Decodable>(_ type: T.Type = T.self, for key: String) -> T? {
         lock.lock()
-        let raw = _values[key]
+        let data = _values[key]
         lock.unlock()
-        guard let raw = raw else { return nil }
-        return fromJSONCompatible(raw, as: type)
+        guard let data else { return nil }
+        return try? JSONDecoder().decode(type, from: data)
     }
 
     public func getRequired<T: Decodable>(_ type: T.Type = T.self, for key: String) throws -> T {
         lock.lock()
-        let raw = _values[key]
+        let data = _values[key]
         lock.unlock()
-        guard let raw = raw else {
+        guard let data else {
             throw OpError.context("Required dry context key '\(key)' not found")
         }
-        guard let value = fromJSONCompatible(raw, as: type) else {
-            let actualType = jsonTypeName(raw)
+        guard let value = try? JSONDecoder().decode(type, from: data) else {
+            let actualType = jsonTypeName(data)
             let expectedType = String(describing: type)
             throw OpError.context(
-                "Type mismatch for dry context key '\(key)': expected type '\(expectedType)', but found '\(actualType)' value: \(raw)"
+                "Type mismatch for dry context key '\(key)': expected type '\(expectedType)', but found '\(actualType)'"
             )
         }
         return value
@@ -70,10 +70,18 @@ public final class DryContext: @unchecked Sendable {
         return Array(_values.keys)
     }
 
+    /// Returns values decoded to Foundation JSON-compatible types (NSNumber, String, Array, Dictionary, NSNull).
     public var values: [String: Any] {
         lock.lock()
-        defer { lock.unlock() }
-        return _values
+        let snapshot = _values
+        lock.unlock()
+        var result: [String: Any] = [:]
+        for (k, data) in snapshot {
+            if let obj = try? JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed) {
+                result[k] = obj
+            }
+        }
+        return result
     }
 
     // MARK: - get_or_insert_with equivalent
@@ -112,11 +120,15 @@ public final class DryContext: @unchecked Sendable {
     // MARK: - Merge
 
     public func merge(_ other: DryContext) {
-        let otherValues = other.values
-        let otherFlags = other.controlFlags
+        // Read from other under other's lock (same class, private access allowed)
+        other.lock.lock()
+        let otherData = other._values
+        let otherFlags = other._controlFlags
+        other.lock.unlock()
+
         lock.lock()
         defer { lock.unlock() }
-        for (k, v) in otherValues {
+        for (k, v) in otherData {
             _values[k] = v
         }
         if otherFlags.aborted && !_controlFlags.aborted {
@@ -169,28 +181,20 @@ public final class DryContext: @unchecked Sendable {
         return c
     }
 
-    // MARK: - JSON serialization helpers
+    // MARK: - Private helpers
 
-    private func toJSONCompatible<T: Encodable>(_ value: T) -> Any? {
-        guard let data = try? JSONEncoder().encode(value),
-              let obj = try? JSONSerialization.jsonObject(with: data, options: []) else {
-            return nil
+    private func jsonTypeName(_ data: Data) -> String {
+        guard let obj = try? JSONSerialization.jsonObject(with: data, options: .fragmentsAllowed) else {
+            return "unknown"
         }
-        return obj
-    }
-
-    private func fromJSONCompatible<T: Decodable>(_ raw: Any, as type: T.Type) -> T? {
-        guard let data = try? JSONSerialization.data(withJSONObject: raw, options: []) else { return nil }
-        return try? JSONDecoder().decode(type, from: data)
-    }
-
-    private func jsonTypeName(_ value: Any) -> String {
-        if value is NSNull { return "null" }
-        if value is Bool { return "boolean" }
-        if value is NSNumber { return "number" }
-        if value is String { return "string" }
-        if value is [Any] { return "array" }
-        if value is [String: Any] { return "object" }
+        if obj is NSNull { return "null" }
+        if let n = obj as? NSNumber {
+            if n === (true as AnyObject) || n === (false as AnyObject) { return "boolean" }
+            return "number"
+        }
+        if obj is String { return "string" }
+        if obj is [Any] { return "array" }
+        if obj is [String: Any] { return "object" }
         return "unknown"
     }
 }
