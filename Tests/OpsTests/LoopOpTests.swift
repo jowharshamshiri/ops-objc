@@ -230,6 +230,105 @@ final class LoopOpTests: XCTestCase {
         XCTAssertEqual(results, [0, 2, 3])
     }
 
+    // TEST074: Run a LoopOp that fails on iteration 2 and verify previously completed iterations are not rolled back
+    func test_074_loop_op_successful_iterations_not_rolled_back() async {
+        final class IterTracker: @unchecked Sendable {
+            var performed: [Int] = []
+            var rolledBack: [Int] = []
+        }
+        let tracker = IterTracker()
+
+        struct IterationTrackingOp: Op {
+            typealias Output = Int
+            let failOnIteration: Int?
+            let tracker: IterTracker
+            let counterVar: String
+            func perform(dry: DryContext, wet: WetContext) async throws -> Int {
+                let counter = dry.get(Int.self, for: counterVar) ?? 0
+                tracker.performed.append(counter)
+                if let fail = failOnIteration, counter == fail {
+                    throw OpError.executionFailed("Failed on iteration \(counter)")
+                }
+                return counter
+            }
+            func rollback(dry: DryContext, wet: WetContext) async throws {
+                let counter = dry.get(Int.self, for: counterVar) ?? 0
+                tracker.rolledBack.append(counter)
+            }
+            func metadata() -> OpMetadata { OpMetadata.builder("IterationTrackingOp").build() }
+        }
+
+        let loopOp = LoopOp(
+            counterVar: "test_counter",
+            limit: 5,
+            ops: [AnyOp(IterationTrackingOp(failOnIteration: 2, tracker: tracker, counterVar: "test_counter"))]
+        )
+        let dry = DryContext()
+        let wet = WetContext()
+        let result = try? await loopOp.perform(dry: dry, wet: wet)
+        XCTAssertNil(result, "Expected loop to fail")
+
+        // Should have executed iterations 0, 1, 2 (fails on 2)
+        XCTAssertEqual(tracker.performed, [0, 1, 2], "Should have performed iterations 0, 1, 2")
+
+        // The failing op did not succeed, so it is not rolled back.
+        // Successful iterations (0 and 1) are not rolled back — loop only rolls back the current iteration.
+        XCTAssertEqual(tracker.rolledBack, [], "No rollback: failing op never succeeded")
+    }
+
+    // TEST075: Run a LoopOp where op2 fails on iteration 1 and verify only op1 from that iteration is rolled back
+    func test_075_loop_op_mixed_iteration_with_rollback() async {
+        final class IterTracker: @unchecked Sendable {
+            var performed: [(Int, Int)] = []   // (opId, iteration)
+            var rolledBack: [(Int, Int)] = []  // (opId, iteration)
+        }
+        let tracker = IterTracker()
+
+        struct MixedIterationOp: Op {
+            typealias Output = Int
+            let id: Int
+            let failOnIteration: Int?
+            let tracker: IterTracker
+            let counterVar: String
+            func perform(dry: DryContext, wet: WetContext) async throws -> Int {
+                let counter = dry.get(Int.self, for: counterVar) ?? 0
+                tracker.performed.append((id, counter))
+                if let fail = failOnIteration, counter == fail {
+                    throw OpError.executionFailed("Op \(id) failed on iteration \(counter)")
+                }
+                return id
+            }
+            func rollback(dry: DryContext, wet: WetContext) async throws {
+                let counter = dry.get(Int.self, for: counterVar) ?? 0
+                tracker.rolledBack.append((id, counter))
+            }
+            func metadata() -> OpMetadata { OpMetadata.builder("MixedIterationOp\(id)").build() }
+        }
+
+        let loopOp = LoopOp(
+            counterVar: "test_counter",
+            limit: 3,
+            ops: [
+                AnyOp(MixedIterationOp(id: 1, failOnIteration: nil, tracker: tracker, counterVar: "test_counter")),
+                AnyOp(MixedIterationOp(id: 2, failOnIteration: 1,   tracker: tracker, counterVar: "test_counter")),
+            ]
+        )
+        let dry = DryContext()
+        let wet = WetContext()
+        let result = try? await loopOp.perform(dry: dry, wet: wet)
+        XCTAssertNil(result, "Expected loop to fail")
+
+        // Iteration 0: op1 ✓, op2 ✓  |  Iteration 1: op1 ✓, op2 ✗
+        XCTAssertEqual(tracker.performed.map { "\($0.0),\($0.1)" },
+                       ["1,0", "2,0", "1,1", "2,1"],
+                       "Should have performed all 4 ops across 2 iterations")
+
+        // Only op1 from iteration 1 is rolled back (op2 failed, so it wasn't added to succeeded)
+        XCTAssertEqual(tracker.rolledBack.map { "\($0.0),\($0.1)" },
+                       ["1,1"],
+                       "Should only rollback op1 from the failed iteration")
+    }
+
     // TEST115: Run an empty LoopOp with a non-zero limit and verify it produces no results
     func test_115_loop_op_with_no_ops_produces_no_results() async throws {
         let loopOp = LoopOp<Int>(counterVar: "counter", limit: 5, ops: [])

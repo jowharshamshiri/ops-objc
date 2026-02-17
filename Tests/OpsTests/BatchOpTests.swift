@@ -297,4 +297,77 @@ final class BatchOpTests: XCTestCase {
             XCTFail("Expected BatchFailed, got: \(error)")
         }
     }
+
+    // TEST052: Verify BatchOp metadata correctly identifies only the externally-required input fields
+    func test_052_batch_metadata_data_flow() {
+        struct ProducerOp: Op {
+            typealias Output = Void
+            func perform(dry: DryContext, wet: WetContext) async throws {
+                let initial = try dry.getRequired(String.self, for: "initial_value")
+                dry.insert("processed_\(initial)", for: "produced_value")
+            }
+            func metadata() -> OpMetadata {
+                OpMetadata.builder("ProducerOp")
+                    .inputSchema([
+                        "type": "object",
+                        "properties": ["initial_value": ["type": "string"]],
+                        "required": ["initial_value"]
+                    ])
+                    .outputSchema([
+                        "type": "object",
+                        "properties": ["produced_value": ["type": "string"]]
+                    ])
+                    .build()
+            }
+        }
+        struct ConsumerOp: Op {
+            typealias Output = Void
+            func perform(dry: DryContext, wet: WetContext) async throws {
+                let produced = try dry.getRequired(String.self, for: "produced_value")
+                let extra = try dry.getRequired(Int.self, for: "extra_param")
+                dry.insert("\(produced)_extra_\(extra)", for: "final_result")
+            }
+            func metadata() -> OpMetadata {
+                OpMetadata.builder("ConsumerOp")
+                    .inputSchema([
+                        "type": "object",
+                        "properties": [
+                            "produced_value": ["type": "string"],
+                            "extra_param": ["type": "integer"]
+                        ],
+                        "required": ["produced_value", "extra_param"]
+                    ])
+                    .outputSchema([
+                        "type": "object",
+                        "properties": ["final_result": ["type": "string"]]
+                    ])
+                    .build()
+            }
+        }
+
+        let ops = [AnyOp(ProducerOp()), AnyOp(ConsumerOp())]
+        let batch = BatchOp(ops: ops)
+        let metadata = batch.metadata()
+
+        // The batch should only require initial_value and extra_param externally.
+        // produced_value is satisfied internally by ProducerOp, so it must NOT appear in required.
+        guard let inputSchema = metadata.inputSchema,
+              let required = inputSchema["required"] as? [String] else {
+            XCTFail("Expected batch metadata to have input schema with required fields")
+            return
+        }
+        XCTAssertEqual(required.count, 2)
+        XCTAssertTrue(required.contains("initial_value"))
+        XCTAssertTrue(required.contains("extra_param"))
+        XCTAssertFalse(required.contains("produced_value"), "produced_value is satisfied internally")
+    }
+
+    // TEST094: Use addOp to dynamically add an op and verify it is executed
+    func test_094_batch_add_op() async throws {
+        let batch = BatchOp(ops: [AnyOp(TestOp(value: 10, shouldFail: false))])
+        batch.addOp(TestOp(value: 20, shouldFail: false))
+        let dry = DryContext(); let wet = WetContext()
+        let results = try await batch.perform(dry: dry, wet: wet)
+        XCTAssertEqual(results, [10, 20])
+    }
 }
