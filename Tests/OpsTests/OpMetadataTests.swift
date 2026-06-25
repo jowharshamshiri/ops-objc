@@ -3,8 +3,8 @@ import XCTest
 
 final class OpMetadataTests: XCTestCase {
 
-    // TEST021: Build OpMetadata with name, description, and schemas and verify all fields are populated
-    func test_021_metadata_builder() {
+    // TEST0021: Build OpMetadata with name, description, and schemas and verify all fields are populated
+    func test0021_metadata_builder() {
         let metadata = OpMetadata.builder("TestOp")
             .description("A test operation")
             .inputSchema([
@@ -21,8 +21,8 @@ final class OpMetadataTests: XCTestCase {
         XCTAssertNotNil(metadata.outputSchema)
     }
 
-    // TEST022: Construct a TriggerFuse with data and verify the trigger name and dry context values
-    func test_022_trigger_fuse() {
+    // TEST0022: Construct a TriggerFuse with data and verify the trigger name and dry context values
+    func test0022_trigger_fuse() {
         let fuse = TriggerFuse(triggerName: "ProcessImage")
             .withData("/tmp/test.jpg", for: "image_path")
             .withData(800, for: "width")
@@ -32,8 +32,8 @@ final class OpMetadataTests: XCTestCase {
         XCTAssertEqual(fuse.dryContext.get(Int.self, for: "width"), 800)
     }
 
-    // TEST023: Validate a DryContext against an input schema and confirm valid/invalid reports
-    func test_023_basic_validation() throws {
+    // TEST0023: Validate a DryContext against an input schema and confirm valid/invalid reports
+    func test0023_basic_validation() throws {
         let metadata = OpMetadata.builder("TestOp")
             .inputSchema(["type": "object", "required": ["name"]])
             .build()

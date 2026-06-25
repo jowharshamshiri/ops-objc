@@ -3,8 +3,8 @@ import XCTest
 
 final class BatchMetadataTests: XCTestCase {
 
-    // TEST047: Build BatchMetadata from producer/consumer ops and verify only external inputs are required
-    func test_047_batch_metadata_with_data_flow() {
+    // TEST0047: Build BatchMetadata from producer/consumer ops and verify only external inputs are required
+    func test0047_batch_metadata_with_data_flow() {
         struct ProducerOp: Op {
             typealias Output = String
             func perform(dry: DryContext, wet: WetContext) async throws -> String {
@@ -60,8 +60,8 @@ final class BatchMetadataTests: XCTestCase {
         }
     }
 
-    // TEST048: Build BatchMetadata from two ops with different reference schemas and verify union of required refs
-    func test_048_reference_schema_merging() {
+    // TEST0048: Build BatchMetadata from two ops with different reference schemas and verify union of required refs
+    func test0048_reference_schema_merging() {
         struct ServiceAOp: Op {
             typealias Output = Void
             func perform(dry: DryContext, wet: WetContext) async throws {}

@@ -50,8 +50,8 @@ private struct CheckAbortOp: Op {
 
 final class ControlFlowTests: XCTestCase {
 
-    // TEST057: Invoke the abort pattern without a reason and verify the context is aborted with no reason string
-    func test_057_abort_without_reason() async {
+    // TEST0057: Invoke the abort pattern without a reason and verify the context is aborted with no reason string
+    func test0057_abort_without_reason() async {
         let dry = DryContext()
         let wet = WetContext()
         let op = AbortTestOp(shouldAbort: true, abortReason: nil)
@@ -68,8 +68,8 @@ final class ControlFlowTests: XCTestCase {
         }
     }
 
-    // TEST058: Invoke the abort pattern with a reason string and verify abort_reason matches
-    func test_058_abort_with_reason() async {
+    // TEST0058: Invoke the abort pattern with a reason string and verify abort_reason matches
+    func test0058_abort_with_reason() async {
         let dry = DryContext()
         let wet = WetContext()
         let op = AbortTestOp(shouldAbort: true, abortReason: "Test reason")
@@ -86,8 +86,8 @@ final class ControlFlowTests: XCTestCase {
         }
     }
 
-    // TEST059: Signal continue from inside an op using the context flag and verify subsequent ops are skipped
-    func test_059_continue_loop_via_context_flag() async throws {
+    // TEST0059: Signal continue from inside an op using the context flag and verify subsequent ops are skipped
+    func test0059_continue_loop_via_context_flag() async throws {
         final class Tracker: @unchecked Sendable { var executed = false }
         let tracker = Tracker()
 
@@ -115,8 +115,8 @@ final class ControlFlowTests: XCTestCase {
         XCTAssertFalse(tracker.executed, "ShouldNotRunOp must not execute after continue signal")
     }
 
-    // TEST060: Use check_abort pattern to short-circuit when the abort flag is already set in context
-    func test_060_check_abort_pattern() async throws {
+    // TEST0060: Use check_abort pattern to short-circuit when the abort flag is already set in context
+    func test0060_check_abort_pattern() async throws {
         let dry = DryContext()
         let wet = WetContext()
 
@@ -134,8 +134,8 @@ final class ControlFlowTests: XCTestCase {
         }
     }
 
-    // TEST061: Run a BatchOp where the second op aborts and verify the batch stops and propagates the abort
-    func test_061_batch_op_with_abort() async {
+    // TEST0061: Run a BatchOp where the second op aborts and verify the batch stops and propagates the abort
+    func test0061_batch_op_with_abort() async {
         let ops = [
             AnyOp(AbortTestOp(shouldAbort: false, abortReason: nil)),
             AnyOp(AbortTestOp(shouldAbort: true, abortReason: "Batch abort")),
@@ -155,8 +155,8 @@ final class ControlFlowTests: XCTestCase {
         }
     }
 
-    // TEST062: Start a BatchOp with an abort flag already set and verify it immediately returns Aborted
-    func test_062_batch_op_with_pre_existing_abort() async {
+    // TEST0062: Start a BatchOp with an abort flag already set and verify it immediately returns Aborted
+    func test0062_batch_op_with_pre_existing_abort() async {
         let ops = [
             AnyOp(AbortTestOp(shouldAbort: false, abortReason: nil)),
             AnyOp(AbortTestOp(shouldAbort: false, abortReason: nil)),
@@ -176,8 +176,8 @@ final class ControlFlowTests: XCTestCase {
         }
     }
 
-    // TEST063: Run a LoopOp where an op signals continue and verify subsequent ops in the iteration are skipped
-    func test_063_loop_op_with_continue() async throws {
+    // TEST0063: Run a LoopOp where an op signals continue and verify subsequent ops in the iteration are skipped
+    func test0063_loop_op_with_continue() async throws {
         final class Tracker: @unchecked Sendable { var executed = false }
         let tracker = Tracker()
 
@@ -209,8 +209,8 @@ final class ControlFlowTests: XCTestCase {
         XCTAssertFalse(tracker.executed, "ShouldSkipOp must never execute")
     }
 
-    // TEST064: Run a LoopOp where an op aborts mid-loop and verify the loop terminates with the abort error
-    func test_064_loop_op_with_abort() async {
+    // TEST0064: Run a LoopOp where an op aborts mid-loop and verify the loop terminates with the abort error
+    func test0064_loop_op_with_abort() async {
         let loopOp = LoopOp(
             counterVar: "test_counter",
             limit: 3,
@@ -233,8 +233,8 @@ final class ControlFlowTests: XCTestCase {
         }
     }
 
-    // TEST065: Start a LoopOp with an abort flag already set and verify it immediately returns Aborted
-    func test_065_loop_op_with_pre_existing_abort() async {
+    // TEST0065: Start a LoopOp with an abort flag already set and verify it immediately returns Aborted
+    func test0065_loop_op_with_pre_existing_abort() async {
         let loopOp = LoopOp(
             counterVar: "test_counter",
             limit: 2,
@@ -254,8 +254,8 @@ final class ControlFlowTests: XCTestCase {
         }
     }
 
-    // TEST066: Nest a batch with a continue op inside a loop and verify results across all iterations
-    func test_066_complex_control_flow_scenario() async throws {
+    // TEST0066: Nest a batch with a continue op inside a loop and verify results across all iterations
+    func test0066_complex_control_flow_scenario() async throws {
         // BatchOp containing [normal(100), continue(200)].
         // continue op sets the flag and returns 0. BatchOp returns [100, 0] per iteration.
         // LoopOp sees the flag after BatchOp finishes and continues to next iteration.

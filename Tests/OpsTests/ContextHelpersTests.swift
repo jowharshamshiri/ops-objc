@@ -3,8 +3,8 @@ import XCTest
 
 final class ContextHelpersTests: XCTestCase {
 
-    // TEST077: Use dryPut and dryGet to store and retrieve a typed value by variable name
-    func test_077_dry_put_and_get() {
+    // TEST0077: Use dryPut and dryGet to store and retrieve a typed value by variable name
+    func test0077_dry_put_and_get() {
         let dry = DryContext()
         let value = 42
         dryPut(value, for: "value", in: dry)
@@ -12,8 +12,8 @@ final class ContextHelpersTests: XCTestCase {
         XCTAssertEqual(retrieved, 42)
     }
 
-    // TEST078: Use dryRequire to retrieve a required value and verify error when key is missing
-    func test_078_dry_require() throws {
+    // TEST0078: Use dryRequire to retrieve a required value and verify error when key is missing
+    func test0078_dry_require() throws {
         let dry = DryContext()
         let name = "test"
         dryPut(name, for: "name", in: dry)
@@ -24,8 +24,8 @@ final class ContextHelpersTests: XCTestCase {
         XCTAssertThrowsError(try dryRequire(Int.self, for: "missing_value", from: dry))
     }
 
-    // TEST079: Use dryResult to store a final result and verify it is stored under both "result" and op name
-    func test_079_dry_result() {
+    // TEST0079: Use dryResult to store a final result and verify it is stored under both "result" and op name
+    func test0079_dry_result() {
         let dry = DryContext()
         let finalValue = "completed"
         dryResult(finalValue, opName: "TestOp", in: dry)
@@ -34,8 +34,8 @@ final class ContextHelpersTests: XCTestCase {
         XCTAssertEqual(dry.get(String.self, for: "TestOp"), "completed")
     }
 
-    // TEST080: Use wetPutRef and wetRequireRef to store and retrieve a service reference
-    func test_080_wet_put_ref_and_require_ref() throws {
+    // TEST0080: Use wetPutRef and wetRequireRef to store and retrieve a service reference
+    func test0080_wet_put_ref_and_require_ref() throws {
         class TestService {
             let value: Int
             init(value: Int) { self.value = value }
@@ -48,8 +48,8 @@ final class ContextHelpersTests: XCTestCase {
         XCTAssertEqual(retrieved.value, 100)
     }
 
-    // TEST081: Store a service via wetPutRef and retrieve it via wetRequireRef
-    func test_081_wet_put_ref_arc_style() throws {
+    // TEST0081: Store a service via wetPutRef and retrieve it via wetRequireRef
+    func test0081_wet_put_ref_arc_style() throws {
         class TestService {
             let value: Int
             init(value: Int) { self.value = value }
@@ -62,8 +62,8 @@ final class ContextHelpersTests: XCTestCase {
         XCTAssertEqual(retrieved.value, 200)
     }
 
-    // TEST082: Run a full op that uses dryRequire and wetRequireRef helpers internally and verify the output
-    func test_082_helpers_in_op() async throws {
+    // TEST0082: Run a full op that uses dryRequire and wetRequireRef helpers internally and verify the output
+    func test0082_helpers_in_op() async throws {
         class TestService {
             let value: Int
             init(value: Int) { self.value = value }

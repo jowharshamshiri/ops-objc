@@ -3,8 +3,8 @@ import XCTest
 
 final class StructuredQueriesTests: XCTestCase {
 
-    // TEST024: Build a flat ListingOutline with depth-0 entries and verify maxDepth, levels, and flatten count
-    func test_024_simple_flat_outline() {
+    // TEST0024: Build a flat ListingOutline with depth-0 entries and verify maxDepth, levels, and flatten count
+    func test0024_simple_flat_outline() {
         var outline = ListingOutline()
         outline.entries = [
             OutlineEntry(title: "Introduction", page: "1", level: 0),
@@ -18,8 +18,8 @@ final class StructuredQueriesTests: XCTestCase {
         XCTAssertEqual(outline.flatten().count, 4)
     }
 
-    // TEST025: Build a two-level outline with chapters and sections and verify depth, level counts, and flatten
-    func test_025_hierarchical_outline() {
+    // TEST0025: Build a two-level outline with chapters and sections and verify depth, level counts, and flatten
+    func test0025_hierarchical_outline() {
         var outline = ListingOutline()
 
         var chapter1 = OutlineEntry(title: "Chapter 1: Basics", page: "10", level: 0)
@@ -39,8 +39,8 @@ final class StructuredQueriesTests: XCTestCase {
         XCTAssertEqual(outline.flatten().count, 5)
     }
 
-    // TEST026: Build a three-level part/chapter/section outline and verify depth and per-level entry counts
-    func test_026_complex_part_based_outline() {
+    // TEST0026: Build a three-level part/chapter/section outline and verify depth and per-level entry counts
+    func test0026_complex_part_based_outline() {
         var outline = ListingOutline()
 
         var part1 = OutlineEntry(title: "Part I: Foundations", page: "1", level: 0)
@@ -69,8 +69,8 @@ final class StructuredQueriesTests: XCTestCase {
         XCTAssertEqual(outline.flatten().count, 6)
     }
 
-    // TEST027: Flatten a nested outline and verify each entry's path reflects its ancestry correctly
-    func test_027_flatten_preserves_hierarchy() {
+    // TEST0027: Flatten a nested outline and verify each entry's path reflects its ancestry correctly
+    func test0027_flatten_preserves_hierarchy() {
         var outline = ListingOutline()
 
         var part = OutlineEntry(title: "Part I", page: "1", level: 0)
@@ -86,8 +86,8 @@ final class StructuredQueriesTests: XCTestCase {
         XCTAssertEqual(flat[2].path, ["Part I", "Chapter 1", "Section 1.1"])
     }
 
-    // TEST028: Call generateOutlineSchema and verify the returned dictionary contains all required definitions
-    func test_028_schema_generation() {
+    // TEST0028: Call generateOutlineSchema and verify the returned dictionary contains all required definitions
+    func test0028_schema_generation() {
         let schema = generateOutlineSchema()
         XCTAssertNotNil(schema["properties"])
         let defs = schema["definitions"] as? [String: Any]

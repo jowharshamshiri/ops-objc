@@ -3,8 +3,8 @@ import XCTest
 
 final class WetContextTests: XCTestCase {
 
-    // TEST011: Insert a reference into WetContext and retrieve it by type via getRef
-    func test_011_wet_context_basic_operations() {
+    // TEST0011: Insert a reference into WetContext and retrieve it by type via getRef
+    func test0011_wet_context_basic_operations() {
         class TestService {
             let name: String
             init(name: String) { self.name = name }
@@ -18,8 +18,8 @@ final class WetContextTests: XCTestCase {
         XCTAssertEqual(retrieved?.name, "test")
     }
 
-    // TEST012: Build a WetContext with chained withRef calls and verify contains for each key
-    func test_012_wet_context_builder() {
+    // TEST0012: Build a WetContext with chained withRef calls and verify contains for each key
+    func test0012_wet_context_builder() {
         class Service1 {}
         class Service2 {}
 
@@ -31,8 +31,8 @@ final class WetContextTests: XCTestCase {
         XCTAssertTrue(ctx.contains("service2"))
     }
 
-    // TEST016: Verify WetContext getRequired returns a Type mismatch error when the stored ref type differs
-    func test_016_wet_context_type_mismatch_error() {
+    // TEST0016: Verify WetContext getRequired returns a Type mismatch error when the stored ref type differs
+    func test0016_wet_context_type_mismatch_error() {
         class ServiceA { let name = "A" }
         class ServiceB { let id = 1 }
 
@@ -54,8 +54,8 @@ final class WetContextTests: XCTestCase {
         }
     }
 
-    // TEST099: Merge two WetContexts and verify both sets of references are accessible in the target
-    func test_099_wet_context_merge() {
+    // TEST0099: Merge two WetContexts and verify both sets of references are accessible in the target
+    func test0099_wet_context_merge() {
         class ServiceA {}
         class ServiceB {}
 
@@ -70,8 +70,8 @@ final class WetContextTests: XCTestCase {
         XCTAssertTrue(ctx1.contains("b"))
     }
 
-    // TEST103: Verify WetContext::keys() returns all inserted reference keys
-    func test_103_wet_context_keys() {
+    // TEST0103: Verify WetContext::keys() returns all inserted reference keys
+    func test0103_wet_context_keys() {
         class Svc {}
         let ctx = WetContext()
         ctx.insertRef(Svc(), for: "svc1")

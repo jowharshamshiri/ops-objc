@@ -18,8 +18,8 @@ final class LoopOpTests: XCTestCase {
         func metadata() -> OpMetadata { OpMetadata.builder("CounterOp").build() }
     }
 
-    // TEST067: Run a LoopOp for 3 iterations with 2 ops each and verify all 6 results in order
-    func test_067_loop_op_basic() async throws {
+    // TEST0067: Run a LoopOp for 3 iterations with 2 ops each and verify all 6 results in order
+    func test0067_loop_op_basic() async throws {
         let dry = DryContext(); let wet = WetContext()
         let ops = [AnyOp(TestOp(value: 10)), AnyOp(TestOp(value: 20))]
         let loopOp = LoopOp(counterVar: "loop_counter", limit: 3, ops: ops)
@@ -28,8 +28,8 @@ final class LoopOpTests: XCTestCase {
         XCTAssertEqual(results, [10, 20, 10, 20, 10, 20])
     }
 
-    // TEST068: Run a LoopOp where each op reads the loop counter and verify values are 0, 1, 2
-    func test_068_loop_op_with_counter_access() async throws {
+    // TEST0068: Run a LoopOp where each op reads the loop counter and verify values are 0, 1, 2
+    func test0068_loop_op_with_counter_access() async throws {
         let dry = DryContext(); let wet = WetContext()
         let ops = [AnyOp(CounterOp())]
         let loopOp = LoopOp(counterVar: "loop_counter", limit: 3, ops: ops)
@@ -37,8 +37,8 @@ final class LoopOpTests: XCTestCase {
         XCTAssertEqual(results, [0, 1, 2])
     }
 
-    // TEST069: Start a LoopOp with a pre-initialized counter and verify it only executes remaining iterations
-    func test_069_loop_op_existing_counter() async throws {
+    // TEST0069: Start a LoopOp with a pre-initialized counter and verify it only executes remaining iterations
+    func test0069_loop_op_existing_counter() async throws {
         let dry = DryContext().with(value: 2, for: "my_counter")
         let wet = WetContext()
         let ops = [AnyOp(TestOp(value: 42))]
@@ -48,8 +48,8 @@ final class LoopOpTests: XCTestCase {
         XCTAssertEqual(results, [42, 42])
     }
 
-    // TEST070: Run a LoopOp with a zero iteration limit and verify no ops are executed
-    func test_070_loop_op_zero_limit() async throws {
+    // TEST0070: Run a LoopOp with a zero iteration limit and verify no ops are executed
+    func test0070_loop_op_zero_limit() async throws {
         let dry = DryContext(); let wet = WetContext()
         let ops = [AnyOp(TestOp(value: 99))]
         let loopOp = LoopOp(counterVar: "counter", limit: 0, ops: ops)
@@ -57,8 +57,8 @@ final class LoopOpTests: XCTestCase {
         XCTAssertEqual(results.count, 0)
     }
 
-    // TEST071: Build a LoopOp with addOp chaining and verify all added ops run across all iterations
-    func test_071_loop_op_builder_pattern() async throws {
+    // TEST0071: Build a LoopOp with addOp chaining and verify all added ops run across all iterations
+    func test0071_loop_op_builder_pattern() async throws {
         let dry = DryContext(); let wet = WetContext()
         let loopOp = LoopOp(counterVar: "builder_counter", limit: 2, ops: [])
             .addOp(AnyOp(TestOp(value: 1)))
@@ -68,8 +68,8 @@ final class LoopOpTests: XCTestCase {
         XCTAssertEqual(results, [1, 2, 1, 2])
     }
 
-    // TEST072: Run a LoopOp where the third op fails and verify succeeded ops are rolled back in reverse order
-    func test_072_loop_op_rollback_on_iteration_failure() async {
+    // TEST0072: Run a LoopOp where the third op fails and verify succeeded ops are rolled back in reverse order
+    func test0072_loop_op_rollback_on_iteration_failure() async {
         final class Log: @unchecked Sendable { var performed: [UInt32] = []; var rolledBack: [UInt32] = [] }
         let log = Log()
 
@@ -99,8 +99,8 @@ final class LoopOpTests: XCTestCase {
         XCTAssertEqual(log.rolledBack, [2, 1])
     }
 
-    // TEST073: Run a LoopOp where the last op fails and verify rollback occurs in LIFO order within the iteration
-    func test_073_loop_op_rollback_order_within_iteration() async {
+    // TEST0073: Run a LoopOp where the last op fails and verify rollback occurs in LIFO order within the iteration
+    func test0073_loop_op_rollback_order_within_iteration() async {
         final class Order: @unchecked Sendable { var order: [UInt32] = [] }
         let order = Order()
 
@@ -132,8 +132,8 @@ final class LoopOpTests: XCTestCase {
         XCTAssertEqual(order.order, [3, 2, 1])
     }
 
-    // TEST076: Run a LoopOp configured to continue on error and verify subsequent iterations still execute
-    func test_076_loop_op_continue_on_error() async throws {
+    // TEST0076: Run a LoopOp configured to continue on error and verify subsequent iterations still execute
+    func test0076_loop_op_continue_on_error() async throws {
         final class Log: @unchecked Sendable { var performed: [(UInt32, Int)] = []; var rolledBack: [(UInt32, Int)] = [] }
         let log = Log()
 
@@ -173,8 +173,8 @@ final class LoopOpTests: XCTestCase {
         XCTAssertEqual(rolledBack[0].1, 1)
     }
 
-    // TEST113: Run a LoopOp where an op sets the break flag via context and verify the loop terminates early
-    func test_113_loop_op_break_terminates_loop() async throws {
+    // TEST0113: Run a LoopOp where an op sets the break flag via context and verify the loop terminates early
+    func test0113_loop_op_break_terminates_loop() async throws {
         struct BreakOp: Op {
             typealias Output = Int
             let shouldBreak: Bool
@@ -200,8 +200,8 @@ final class LoopOpTests: XCTestCase {
         XCTAssertEqual(results, [10, 99])
     }
 
-    // TEST114: Run LoopOp with continueOnError where an op fails and verify the loop continues
-    func test_114_loop_op_continue_on_error_skips_failed_iterations() async throws {
+    // TEST0114: Run LoopOp with continueOnError where an op fails and verify the loop continues
+    func test0114_loop_op_continue_on_error_skips_failed_iterations() async throws {
         final class Seen: @unchecked Sendable { var iterations: [Int] = [] }
         let seen = Seen()
 
@@ -230,8 +230,8 @@ final class LoopOpTests: XCTestCase {
         XCTAssertEqual(results, [0, 2, 3])
     }
 
-    // TEST074: Run a LoopOp that fails on iteration 2 and verify previously completed iterations are not rolled back
-    func test_074_loop_op_successful_iterations_not_rolled_back() async {
+    // TEST0074: Run a LoopOp that fails on iteration 2 and verify previously completed iterations are not rolled back
+    func test0074_loop_op_successful_iterations_not_rolled_back() async {
         final class IterTracker: @unchecked Sendable {
             var performed: [Int] = []
             var rolledBack: [Int] = []
@@ -276,8 +276,8 @@ final class LoopOpTests: XCTestCase {
         XCTAssertEqual(tracker.rolledBack, [], "No rollback: failing op never succeeded")
     }
 
-    // TEST075: Run a LoopOp where op2 fails on iteration 1 and verify only op1 from that iteration is rolled back
-    func test_075_loop_op_mixed_iteration_with_rollback() async {
+    // TEST0075: Run a LoopOp where op2 fails on iteration 1 and verify only op1 from that iteration is rolled back
+    func test0075_loop_op_mixed_iteration_with_rollback() async {
         final class IterTracker: @unchecked Sendable {
             var performed: [(Int, Int)] = []   // (opId, iteration)
             var rolledBack: [(Int, Int)] = []  // (opId, iteration)
@@ -329,8 +329,8 @@ final class LoopOpTests: XCTestCase {
                        "Should only rollback op1 from the failed iteration")
     }
 
-    // TEST115: Run an empty LoopOp with a non-zero limit and verify it produces no results
-    func test_115_loop_op_with_no_ops_produces_no_results() async throws {
+    // TEST0115: Run an empty LoopOp with a non-zero limit and verify it produces no results
+    func test0115_loop_op_with_no_ops_produces_no_results() async throws {
         let loopOp = LoopOp<Int>(counterVar: "counter", limit: 5, ops: [])
         let dry = DryContext(); let wet = WetContext()
         let results = try await loopOp.perform(dry: dry, wet: wet)

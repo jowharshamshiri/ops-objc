@@ -39,8 +39,8 @@ final class TimeBoundWrapperTests: XCTestCase {
         func metadata() -> OpMetadata { OpMetadata.builder("CompositeOp").build() }
     }
 
-    // TEST033: Wrap a fast op in TimeBoundWrapper and confirm it completes before the timeout
-    func test_033_timeout_wrapper_success() async throws {
+    // TEST0033: Wrap a fast op in TimeBoundWrapper and confirm it completes before the timeout
+    func test0033_timeout_wrapper_success() async throws {
         let dry = DryContext()
         let wet = WetContext()
         let wrapper = TimeBoundWrapper(op: AnyOp(SlowOp()), timeout: 0.2)
@@ -48,8 +48,8 @@ final class TimeBoundWrapperTests: XCTestCase {
         XCTAssertEqual(result, 42)
     }
 
-    // TEST034: Wrap a slow op in TimeBoundWrapper with a short timeout and verify a Timeout error is returned
-    func test_034_timeout_wrapper_timeout() async {
+    // TEST0034: Wrap a slow op in TimeBoundWrapper with a short timeout and verify a Timeout error is returned
+    func test0034_timeout_wrapper_timeout() async {
         let dry = DryContext()
         let wet = WetContext()
         let wrapper = TimeBoundWrapper(op: AnyOp(VerySlowOp()), timeout: 0.05)
@@ -63,8 +63,8 @@ final class TimeBoundWrapperTests: XCTestCase {
         }
     }
 
-    // TEST035: Create a named TimeBoundWrapper and verify the op succeeds and returns the expected value
-    func test_035_timeout_wrapper_with_name() async throws {
+    // TEST0035: Create a named TimeBoundWrapper and verify the op succeeds and returns the expected value
+    func test0035_timeout_wrapper_with_name() async throws {
         let dry = DryContext()
         let wet = WetContext()
         let wrapper = TimeBoundWrapper(op: AnyOp(StringOp()), timeout: 0.1, name: "TestOp")
@@ -72,8 +72,8 @@ final class TimeBoundWrapperTests: XCTestCase {
         XCTAssertEqual(result, "success")
     }
 
-    // TEST036: Use createTimeoutWrapperWithCallerName helper and verify the op result is returned
-    func test_036_caller_name_wrapper() async throws {
+    // TEST0036: Use createTimeoutWrapperWithCallerName helper and verify the op result is returned
+    func test0036_caller_name_wrapper() async throws {
         let dry = DryContext()
         let wet = WetContext()
         let wrapper = createTimeoutWrapperWithCallerName(AnyOp(IntOp()), timeout: 0.1)
@@ -81,8 +81,8 @@ final class TimeBoundWrapperTests: XCTestCase {
         XCTAssertEqual(result, 100)
     }
 
-    // TEST037: Use createLoggedTimeoutWrapper to compose logging and timeout wrappers and verify success
-    func test_037_logged_timeout_wrapper() async throws {
+    // TEST0037: Use createLoggedTimeoutWrapper to compose logging and timeout wrappers and verify success
+    func test0037_logged_timeout_wrapper() async throws {
         let dry = DryContext()
         let wet = WetContext()
         let wrapped = createLoggedTimeoutWrapper(AnyOp(CompositeOp()), timeout: 0.1, triggerName: "CompositeOp")

@@ -3,8 +3,8 @@ import XCTest
 
 final class DryContextTests: XCTestCase {
 
-    // TEST009: Insert typed values into DryContext and verify get/contains work correctly
-    func test_009_dry_context_basic_operations() {
+    // TEST0009: Insert typed values into DryContext and verify get/contains work correctly
+    func test0009_dry_context_basic_operations() {
         let ctx = DryContext()
         ctx.insert("test", for: "name")
         ctx.insert(42, for: "count")
@@ -15,8 +15,8 @@ final class DryContextTests: XCTestCase {
         XCTAssertFalse(ctx.contains("missing"))
     }
 
-    // TEST010: Build a DryContext with chained with-value calls and verify all values are stored
-    func test_010_dry_context_builder() {
+    // TEST0010: Build a DryContext with chained with-value calls and verify all values are stored
+    func test0010_dry_context_builder() {
         let ctx = DryContext()
             .with(value: "value1", for: "key1")
             .with(value: 123, for: "key2")
@@ -25,16 +25,16 @@ final class DryContextTests: XCTestCase {
         XCTAssertEqual(ctx.get(Int.self, for: "key2"), 123)
     }
 
-    // TEST013: Confirm getRequired succeeds for present keys and returns an error for missing keys
-    func test_013_required_values() {
+    // TEST0013: Confirm getRequired succeeds for present keys and returns an error for missing keys
+    func test0013_required_values() {
         let ctx = DryContext().with(value: 42, for: "exists")
 
         XCTAssertEqual(try? ctx.getRequired(Int.self, for: "exists"), 42)
         XCTAssertThrowsError(try ctx.getRequired(Int.self, for: "missing"))
     }
 
-    // TEST014: Merge two DryContexts and verify values from both are accessible in the target
-    func test_014_context_merge() {
+    // TEST0014: Merge two DryContexts and verify values from both are accessible in the target
+    func test0014_context_merge() {
         let ctx1 = DryContext().with(value: 1, for: "a")
         let ctx2 = DryContext().with(value: 2, for: "b")
         ctx1.merge(ctx2)
@@ -42,8 +42,8 @@ final class DryContextTests: XCTestCase {
         XCTAssertEqual(ctx1.get(Int.self, for: "b"), 2)
     }
 
-    // TEST015: Verify getRequired returns a Type mismatch error when the stored type doesn't match
-    func test_015_dry_context_type_mismatch_error() {
+    // TEST0015: Verify getRequired returns a Type mismatch error when the stored type doesn't match
+    func test0015_dry_context_type_mismatch_error() {
         let ctx = DryContext()
             .with(value: "not_a_number", for: "count")
             .with(value: 123, for: "flag")
@@ -63,8 +63,8 @@ final class DryContextTests: XCTestCase {
         }
     }
 
-    // TEST017: Set and clear abort flags on DryContext and verify isAborted and abortReason reflect state
-    func test_017_control_flags() {
+    // TEST0017: Set and clear abort flags on DryContext and verify isAborted and abortReason reflect state
+    func test0017_control_flags() {
         let ctx = DryContext()
 
         XCTAssertFalse(ctx.isAborted)
@@ -79,8 +79,8 @@ final class DryContextTests: XCTestCase {
         XCTAssertNil(ctx.abortReason)
     }
 
-    // TEST018: Merge contexts with abort flags and confirm the target inherits the abort state correctly
-    func test_018_control_flags_merge() {
+    // TEST0018: Merge contexts with abort flags and confirm the target inherits the abort state correctly
+    func test0018_control_flags_merge() {
         let ctx1 = DryContext()
         let ctx2 = DryContext()
         ctx2.setAbort(reason: "Merged abort")
@@ -98,8 +98,8 @@ final class DryContextTests: XCTestCase {
         XCTAssertEqual(ctx3.abortReason, "Original abort")
     }
 
-    // TEST019: Verify getOrInsert inserts when missing and returns existing without calling factory
-    func test_019_get_or_insert_with() throws {
+    // TEST0019: Verify getOrInsert inserts when missing and returns existing without calling factory
+    func test0019_get_or_insert_with() throws {
         let ctx = DryContext()
 
         let value = try ctx.getOrInsert(for: "count") { 42 }
@@ -115,8 +115,8 @@ final class DryContextTests: XCTestCase {
         XCTAssertFalse(factoryCalled)
     }
 
-    // TEST020: Verify getOrCompute computes and stores a value using context data
-    func test_020_get_or_compute_with() throws {
+    // TEST0020: Verify getOrCompute computes and stores a value using context data
+    func test0020_get_or_compute_with() throws {
         let ctx = DryContext()
         ctx.insert(8000, for: "base_port")
         ctx.insert("test_app", for: "app_name")
@@ -141,8 +141,8 @@ final class DryContextTests: XCTestCase {
         XCTAssertFalse(computerCalled)
     }
 
-    // TEST098: Merge two DryContexts where keys overlap and verify the merging context's values win
-    func test_098_dry_context_merge_overwrites_keys() {
+    // TEST0098: Merge two DryContexts where keys overlap and verify the merging context's values win
+    func test0098_dry_context_merge_overwrites_keys() {
         let ctx1 = DryContext().with(value: 1, for: "shared").with(value: 10, for: "only_in_1")
         let ctx2 = DryContext().with(value: 2, for: "shared").with(value: 20, for: "only_in_2")
         ctx1.merge(ctx2)
@@ -151,8 +151,8 @@ final class DryContextTests: XCTestCase {
         XCTAssertEqual(ctx1.get(Int.self, for: "only_in_2"), 20)
     }
 
-    // TEST100: Serialize and deserialize a DryContext JSON representation and verify all values survive
-    func test_100_dry_context_serde_roundtrip() throws {
+    // TEST0100: Serialize and deserialize a DryContext JSON representation and verify all values survive
+    func test0100_dry_context_serde_roundtrip() throws {
         let original = DryContext()
             .with(value: "alice", for: "name")
             .with(value: 42, for: "count")
@@ -185,8 +185,8 @@ final class DryContextTests: XCTestCase {
         XCTAssertEqual(ctx.get(Bool.self, for: "flag"), true)
     }
 
-    // TEST101: Clone a DryContext and verify the clone is independent (mutations don't propagate)
-    func test_101_dry_context_clone_is_independent() {
+    // TEST0101: Clone a DryContext and verify the clone is independent (mutations don't propagate)
+    func test0101_dry_context_clone_is_independent() {
         let original = DryContext().with(value: 1, for: "x")
         let cloned = original.copy()
         cloned.insert(99, for: "x")
@@ -194,8 +194,8 @@ final class DryContextTests: XCTestCase {
         XCTAssertEqual(cloned.get(Int.self, for: "x"), 99)
     }
 
-    // TEST102: Verify DryContext::keys() returns all inserted keys
-    func test_102_dry_context_keys() {
+    // TEST0102: Verify DryContext::keys() returns all inserted keys
+    func test0102_dry_context_keys() {
         let ctx = DryContext()
             .with(value: 1, for: "alpha")
             .with(value: 2, for: "beta")

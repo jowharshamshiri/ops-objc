@@ -30,8 +30,8 @@ final class ValidatingWrapperTests: XCTestCase {
         }
     }
 
-    // TEST038: Run ValidatingWrapper with a valid input and verify the op executes and returns the result
-    func test_038_valid_input_output() async throws {
+    // TEST0038: Run ValidatingWrapper with a valid input and verify the op executes and returns the result
+    func test0038_valid_input_output() async throws {
         let validator = ValidatingWrapper(op: AnyOp(ValidatedOp()))
         let dry = DryContext()
         dry.insert(42, for: "value")
@@ -40,8 +40,8 @@ final class ValidatingWrapperTests: XCTestCase {
         XCTAssertEqual(result.value, 42)
     }
 
-    // TEST039: Run ValidatingWrapper without a required input field and verify a Context validation error
-    func test_039_invalid_input_missing_required() async {
+    // TEST0039: Run ValidatingWrapper without a required input field and verify a Context validation error
+    func test0039_invalid_input_missing_required() async {
         let validator = ValidatingWrapper(op: AnyOp(ValidatedOp()))
         let dry = DryContext() // missing "value"
         let wet = WetContext()
@@ -55,8 +55,8 @@ final class ValidatingWrapperTests: XCTestCase {
         }
     }
 
-    // TEST040: Run ValidatingWrapper with an input exceeding the schema maximum and verify a validation error
-    func test_040_invalid_input_out_of_range() async {
+    // TEST0040: Run ValidatingWrapper with an input exceeding the schema maximum and verify a validation error
+    func test0040_invalid_input_out_of_range() async {
         let validator = ValidatingWrapper(op: AnyOp(ValidatedOp()))
         let dry = DryContext()
         dry.insert(150, for: "value") // exceeds maximum of 100
@@ -71,8 +71,8 @@ final class ValidatingWrapperTests: XCTestCase {
         }
     }
 
-    // TEST041: Use ValidatingWrapper.inputOnly and confirm input is validated while output is not
-    func test_041_input_only_validation() async throws {
+    // TEST0041: Use ValidatingWrapper.inputOnly and confirm input is validated while output is not
+    func test0041_input_only_validation() async throws {
         struct NoOutputSchemaOp: Op {
             typealias Output = Int
             func perform(dry: DryContext, wet: WetContext) async throws -> Int {
@@ -96,8 +96,8 @@ final class ValidatingWrapperTests: XCTestCase {
         XCTAssertEqual(result, 42)
     }
 
-    // TEST042: Use ValidatingWrapper.outputOnly and confirm output is validated while input is not
-    func test_042_output_only_validation() async throws {
+    // TEST0042: Use ValidatingWrapper.outputOnly and confirm output is validated while input is not
+    func test0042_output_only_validation() async throws {
         struct NoInputSchemaOp: Op {
             typealias Output = TestOutput
             func perform(dry: DryContext, wet: WetContext) async throws -> TestOutput {
@@ -120,8 +120,8 @@ final class ValidatingWrapperTests: XCTestCase {
         XCTAssertEqual(result.value, 99)
     }
 
-    // TEST043: Wrap an op with no schemas in ValidatingWrapper and confirm it still succeeds
-    func test_043_no_schema_validation() async throws {
+    // TEST0043: Wrap an op with no schemas in ValidatingWrapper and confirm it still succeeds
+    func test0043_no_schema_validation() async throws {
         struct NoSchemaOp: Op {
             typealias Output = Int
             func perform(dry: DryContext, wet: WetContext) async throws -> Int { 123 }
@@ -134,8 +134,8 @@ final class ValidatingWrapperTests: XCTestCase {
         XCTAssertEqual(result, 123)
     }
 
-    // TEST044: Verify ValidatingWrapper.metadata() delegates to the inner op's metadata unchanged
-    func test_044_metadata_transparency() {
+    // TEST0044: Verify ValidatingWrapper.metadata() delegates to the inner op's metadata unchanged
+    func test0044_metadata_transparency() {
         let validator = ValidatingWrapper(op: AnyOp(ValidatedOp()))
         let meta = validator.metadata()
         XCTAssertEqual(meta.name, "ValidatedOp")
@@ -144,8 +144,8 @@ final class ValidatingWrapperTests: XCTestCase {
         XCTAssertNotNil(meta.outputSchema)
     }
 
-    // TEST045: Verify ValidatingWrapper checks reference_schema and rejects when required refs are missing
-    func test_045_reference_validation() async throws {
+    // TEST0045: Verify ValidatingWrapper checks reference_schema and rejects when required refs are missing
+    func test0045_reference_validation() async throws {
         struct ServiceRequiringOp: Op {
             typealias Output = String
             func perform(dry: DryContext, wet: WetContext) async throws -> String {
@@ -192,8 +192,8 @@ final class ValidatingWrapperTests: XCTestCase {
         XCTAssertEqual(result, "Used service: postgresql")
     }
 
-    // TEST046: Wrap an op with no reference schema in ValidatingWrapper and confirm it succeeds
-    func test_046_no_reference_schema() async throws {
+    // TEST0046: Wrap an op with no reference schema in ValidatingWrapper and confirm it succeeds
+    func test0046_no_reference_schema() async throws {
         struct NoRefSchemaOp: Op {
             typealias Output = Int
             func perform(dry: DryContext, wet: WetContext) async throws -> Int { 456 }
@@ -206,8 +206,8 @@ final class ValidatingWrapperTests: XCTestCase {
         XCTAssertEqual(result, 456)
     }
 
-    // TEST112: Verify ValidatingWrapper.outputOnly validates references even when input validation is disabled
-    func test_112_output_only_still_validates_references() async throws {
+    // TEST0112: Verify ValidatingWrapper.outputOnly validates references even when input validation is disabled
+    func test0112_output_only_still_validates_references() async throws {
         struct RefRequiringOp: Op {
             typealias Output = Int
             func perform(dry: DryContext, wet: WetContext) async throws -> Int { 42 }

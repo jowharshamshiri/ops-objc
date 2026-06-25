@@ -14,8 +14,8 @@ final class BatchOpTests: XCTestCase {
         func metadata() -> OpMetadata { OpMetadata.builder("TestOp").build() }
     }
 
-    // TEST049: Run BatchOp with two succeeding ops and verify results contain both values in order
-    func test_049_batch_op_success() async throws {
+    // TEST0049: Run BatchOp with two succeeding ops and verify results contain both values in order
+    func test0049_batch_op_success() async throws {
         let ops = [AnyOp(TestOp(value: 1, shouldFail: false)), AnyOp(TestOp(value: 2, shouldFail: false))]
         let batch = BatchOp(ops: ops)
         let dry = DryContext()
@@ -24,8 +24,8 @@ final class BatchOpTests: XCTestCase {
         XCTAssertEqual(results, [1, 2])
     }
 
-    // TEST050: Run BatchOp where the second op fails and verify the batch returns an error
-    func test_050_batch_op_failure() async {
+    // TEST0050: Run BatchOp where the second op fails and verify the batch returns an error
+    func test0050_batch_op_failure() async {
         let ops = [AnyOp(TestOp(value: 1, shouldFail: false)), AnyOp(TestOp(value: 2, shouldFail: true))]
         let batch = BatchOp(ops: ops)
         let dry = DryContext()
@@ -38,8 +38,8 @@ final class BatchOpTests: XCTestCase {
         }
     }
 
-    // TEST051: Run BatchOp with two ops and verify both result values are present in order
-    func test_051_batch_op_returns_all_results() async throws {
+    // TEST0051: Run BatchOp with two ops and verify both result values are present in order
+    func test0051_batch_op_returns_all_results() async throws {
         let ops = [AnyOp(TestOp(value: 1, shouldFail: false)), AnyOp(TestOp(value: 2, shouldFail: false))]
         let batch = BatchOp(ops: ops)
         let dry = DryContext()
@@ -50,8 +50,8 @@ final class BatchOpTests: XCTestCase {
         XCTAssertTrue(results.contains(2))
     }
 
-    // TEST053: Verify BatchOp merges reference schemas from all ops into a unified set of required refs
-    func test_053_batch_reference_schema_merging() {
+    // TEST0053: Verify BatchOp merges reference schemas from all ops into a unified set of required refs
+    func test0053_batch_reference_schema_merging() {
         struct ServiceAOp: Op {
             typealias Output = Void
             func perform(dry: DryContext, wet: WetContext) async throws {}
@@ -92,8 +92,8 @@ final class BatchOpTests: XCTestCase {
         }
     }
 
-    // TEST054: Run BatchOp where the third op fails and verify rollback is called on the first two but not the third
-    func test_054_batch_rollback_on_failure() async {
+    // TEST0054: Run BatchOp where the third op fails and verify rollback is called on the first two but not the third
+    func test0054_batch_rollback_on_failure() async {
         final class Tracker: @unchecked Sendable {
             var performed = false
             var rolledBack = false
@@ -155,8 +155,8 @@ final class BatchOpTests: XCTestCase {
         XCTAssertFalse(r3.performed, "Op3 should NOT have been rolled back (it failed)")
     }
 
-    // TEST055: Run BatchOp where the last op fails and verify rollback occurs in reverse (LIFO) order
-    func test_055_batch_rollback_order() async {
+    // TEST0055: Run BatchOp where the last op fails and verify rollback occurs in reverse (LIFO) order
+    func test0055_batch_rollback_order() async {
         final class RollbackOrder: @unchecked Sendable { var order: [UInt32] = [] }
         let rollbackOrder = RollbackOrder()
 
@@ -190,8 +190,8 @@ final class BatchOpTests: XCTestCase {
         XCTAssertEqual(rollbackOrder.order, [3, 2, 1], "Rollback should happen in reverse order")
     }
 
-    // TEST056: Run BatchOp where one op fails and verify rollback is triggered for succeeded ops
-    func test_056_batch_rollback_on_failure_partial() async {
+    // TEST0056: Run BatchOp where one op fails and verify rollback is triggered for succeeded ops
+    func test0056_batch_rollback_on_failure_partial() async {
         final class Tracker: @unchecked Sendable { var performed = false; var rolledBack = false }
         struct TrackingOp: Op {
             typealias Output = UInt32
@@ -222,8 +222,8 @@ final class BatchOpTests: XCTestCase {
         XCTAssertFalse(r2.performed, "Op2 should NOT have been rolled back")
     }
 
-    // TEST093: Call BatchOp.count and isEmpty on empty and non-empty batches
-    func test_093_batch_len_and_is_empty() {
+    // TEST0093: Call BatchOp.count and isEmpty on empty and non-empty batches
+    func test0093_batch_len_and_is_empty() {
         let empty = BatchOp<Int>(ops: [])
         XCTAssertEqual(empty.count, 0)
         XCTAssertTrue(empty.isEmpty)
@@ -233,8 +233,8 @@ final class BatchOpTests: XCTestCase {
         XCTAssertFalse(nonempty.isEmpty)
     }
 
-    // TEST095: Run BatchOp with continueOnError and verify it collects results past failures
-    func test_095_batch_continue_on_error() async throws {
+    // TEST0095: Run BatchOp with continueOnError and verify it collects results past failures
+    func test0095_batch_continue_on_error() async throws {
         let ops = [
             AnyOp(TestOp(value: 1, shouldFail: false)),
             AnyOp(TestOp(value: 2, shouldFail: true)),
@@ -246,16 +246,16 @@ final class BatchOpTests: XCTestCase {
         XCTAssertEqual(results, [1, 3])
     }
 
-    // TEST096: Run an empty BatchOp and verify it returns an empty result array
-    func test_096_empty_batch_returns_empty() async throws {
+    // TEST0096: Run an empty BatchOp and verify it returns an empty result array
+    func test0096_empty_batch_returns_empty() async throws {
         let batch = BatchOp<Int>(ops: [])
         let dry = DryContext(); let wet = WetContext()
         let results = try await batch.perform(dry: dry, wet: wet)
         XCTAssertTrue(results.isEmpty)
     }
 
-    // TEST097: Verify nested BatchOp rollback propagates correctly when outer batch fails
-    func test_097_nested_batch_rollback() async {
+    // TEST0097: Verify nested BatchOp rollback propagates correctly when outer batch fails
+    func test0097_nested_batch_rollback() async {
         struct SimpleOp: Op {
             typealias Output = Int
             let shouldFail: Bool
@@ -298,8 +298,8 @@ final class BatchOpTests: XCTestCase {
         }
     }
 
-    // TEST052: Verify BatchOp metadata correctly identifies only the externally-required input fields
-    func test_052_batch_metadata_data_flow() {
+    // TEST0052: Verify BatchOp metadata correctly identifies only the externally-required input fields
+    func test0052_batch_metadata_data_flow() {
         struct ProducerOp: Op {
             typealias Output = Void
             func perform(dry: DryContext, wet: WetContext) async throws {
@@ -362,8 +362,8 @@ final class BatchOpTests: XCTestCase {
         XCTAssertFalse(required.contains("produced_value"), "produced_value is satisfied internally")
     }
 
-    // TEST094: Use addOp to dynamically add an op and verify it is executed
-    func test_094_batch_add_op() async throws {
+    // TEST0094: Use addOp to dynamically add an op and verify it is executed
+    func test0094_batch_add_op() async throws {
         let batch = BatchOp(ops: [AnyOp(TestOp(value: 10, shouldFail: false))])
         batch.addOp(TestOp(value: 20, shouldFail: false))
         let dry = DryContext(); let wet = WetContext()

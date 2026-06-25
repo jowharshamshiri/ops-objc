@@ -23,8 +23,8 @@ final class LoggingWrapperTests: XCTestCase {
         func metadata() -> OpMetadata { OpMetadata.builder("StringOp").build() }
     }
 
-    // TEST029: Wrap a successful op in LoggingWrapper and verify it passes through the result unchanged
-    func test_029_logging_wrapper_success() async throws {
+    // TEST0029: Wrap a successful op in LoggingWrapper and verify it passes through the result unchanged
+    func test0029_logging_wrapper_success() async throws {
         let dry = DryContext()
         let wet = WetContext()
         let wrapper = LoggingWrapper(op: AnyOp(TestOp()), name: "TestOp")
@@ -32,8 +32,8 @@ final class LoggingWrapperTests: XCTestCase {
         XCTAssertEqual(result, 42)
     }
 
-    // TEST030: Wrap a failing op in LoggingWrapper and verify the error includes the op name context
-    func test_030_logging_wrapper_failure() async {
+    // TEST0030: Wrap a failing op in LoggingWrapper and verify the error includes the op name context
+    func test0030_logging_wrapper_failure() async {
         let dry = DryContext()
         let wet = WetContext()
         let wrapper = LoggingWrapper<Int>(op: AnyOp(FailingOp()), name: "FailingOp")
@@ -47,8 +47,8 @@ final class LoggingWrapperTests: XCTestCase {
         }
     }
 
-    // TEST031: Use createContextAwareLogger helper and verify the wrapped op returns its result
-    func test_031_context_aware_logger() async throws {
+    // TEST0031: Use createContextAwareLogger helper and verify the wrapped op returns its result
+    func test0031_context_aware_logger() async throws {
         let dry = DryContext()
         let wet = WetContext()
         let wrapper = createContextAwareLogger(AnyOp(StringOp()))
@@ -56,8 +56,8 @@ final class LoggingWrapperTests: XCTestCase {
         XCTAssertEqual(result, "test")
     }
 
-    // TEST032: Verify ANSI color escape code constants have the expected ANSI sequence values
-    func test_032_ansi_color_constants() {
+    // TEST0032: Verify ANSI color escape code constants have the expected ANSI sequence values
+    func test0032_ansi_color_constants() {
         XCTAssertEqual(ANSIColors.yellow, "\u{1b}[33m")
         XCTAssertEqual(ANSIColors.green, "\u{1b}[32m")
         XCTAssertEqual(ANSIColors.red, "\u{1b}[31m")

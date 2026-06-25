@@ -9,23 +9,23 @@ final class OpsUtilTests: XCTestCase {
         func metadata() -> OpMetadata { OpMetadata.builder("TestOp").build() }
     }
 
-    // TEST005: Confirm the perform() utility wraps an op with automatic logging and returns its result
-    func test_005_perform_with_auto_logging() async throws {
+    // TEST0005: Confirm the perform() utility wraps an op with automatic logging and returns its result
+    func test0005_perform_with_auto_logging() async throws {
         let dry = DryContext()
         let wet = WetContext()
         let result = try await Ops.perform(TestOp(), dry: dry, wet: wet)
         XCTAssertEqual(result, 42)
     }
 
-    // TEST006: Verify callerTriggerName() returns a string containing "::"
-    func test_006_caller_trigger_name() {
+    // TEST0006: Verify callerTriggerName() returns a string containing "::"
+    func test0006_caller_trigger_name() {
         let name = callerTriggerName()
         XCTAssertTrue(name.contains("OpsUtilTests"))
         XCTAssertTrue(name.contains("::"))
     }
 
-    // TEST007: Confirm wrapNestedOpException wraps an error with the op name in the message
-    func test_007_wrap_nested_op_exception() {
+    // TEST0007: Confirm wrapNestedOpException wraps an error with the op name in the message
+    func test0007_wrap_nested_op_exception() {
         let original = OpError.executionFailed("original error")
         let wrapped = wrapNestedOpException("TestOp", error: original)
         if case .executionFailed(let msg) = wrapped {
@@ -36,8 +36,8 @@ final class OpsUtilTests: XCTestCase {
         }
     }
 
-    // TEST008: Verify wrapRuntimeException converts a standard error into an OpError.executionFailed
-    func test_008_wrap_runtime_exception() {
+    // TEST0008: Verify wrapRuntimeException converts a standard error into an OpError.executionFailed
+    func test0008_wrap_runtime_exception() {
         struct StdErr: Error, Sendable {
             let message: String
             init() { message = "test error" }
