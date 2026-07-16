@@ -6,8 +6,21 @@ public enum OpError: Error, CustomStringConvertible, Sendable {
     case timeout(timeoutMs: UInt64)
     case context(String)
     case batchFailed(String)
+    /// A CLASSIFIED failure inside wrapping context (a batch child, a
+    /// trigger-wrapped op, …) — the wrapper preserves the origin's failure
+    /// identity instead of flattening it into prose. `chain` is the wrapping
+    /// text (which op, which index) for humans; code/class/reason are the
+    /// origin's, verbatim. (matches Rust OpError::WrappedClassified)
+    case wrappedClassified(chain: String, code: String, failureClass: FailureClass, reason: String)
     case aborted(String)
     case trigger(String)
+    /// A failure carrying its FULL identity from the emit source: the
+    /// machine-readable code the origin error declares, the failure class it
+    /// declares (whose problem it is), and the leaf human message. Wrapping
+    /// layers construct `.wrappedClassified` from classified origins instead
+    /// of folding everything into prose; the engine's run record and retry
+    /// policy read it structurally. (matches Rust OpError::Classified)
+    case classified(code: String, failureClass: FailureClass, message: String)
     case other(any Error & Sendable)
 
     /// Internal control-flow signals used by LoopOp. Never escape to callers.
@@ -28,12 +41,58 @@ public enum OpError: Error, CustomStringConvertible, Sendable {
             return "Op aborted: \(msg)"
         case .trigger(let msg):
             return "Trigger error: \(msg)"
+        case .wrappedClassified(let chain, _, _, _):
+            return chain
+        case .classified(let code, _, let message):
+            return "\(code): \(message)"
         case .other(let err):
             return describeError(err)
         case ._loopContinue:
             return "Loop continue"
         case ._loopBreak:
             return "Loop break"
+        }
+    }
+
+    /// The failure class this error DECLARES. Classified variants carry
+    /// their origin's declaration; everything else is `.internal` —
+    /// unclassified means "ours", never a guess (docs/failure-taxonomy.md).
+    /// (matches Rust OpError::failure_class)
+    public var failureClass: FailureClass {
+        switch self {
+        case .classified(_, let failureClass, _):
+            return failureClass
+        case .wrappedClassified(_, _, let failureClass, _):
+            return failureClass
+        default:
+            return .internal
+        }
+    }
+
+    /// The machine-readable code declared at the emit source, when the
+    /// failure carried one. (matches Rust OpError::failure_code)
+    public var failureCode: String? {
+        switch self {
+        case .classified(let code, _, _):
+            return code
+        case .wrappedClassified(_, let code, _, _):
+            return code
+        default:
+            return nil
+        }
+    }
+
+    /// The LEAF human reason — the origin's own message for classified
+    /// failures, the description otherwise.
+    /// (matches Rust OpError::failure_reason)
+    public var failureReason: String {
+        switch self {
+        case .classified(_, _, let message):
+            return message
+        case .wrappedClassified(_, _, _, let reason):
+            return reason
+        default:
+            return description
         }
     }
 }
@@ -58,6 +117,10 @@ extension OpError: Equatable {
         case (.batchFailed(let a), .batchFailed(let b)): return a == b
         case (.aborted(let a), .aborted(let b)): return a == b
         case (.trigger(let a), .trigger(let b)): return a == b
+        case (.classified(let ac, let al, let am), .classified(let bc, let bl, let bm)):
+            return ac == bc && al == bl && am == bm
+        case (.wrappedClassified(let ah, let ac, let al, let ar), .wrappedClassified(let bh, let bc, let bl, let br)):
+            return ah == bh && ac == bc && al == bl && ar == br
         case (._loopContinue, ._loopContinue): return true
         case (._loopBreak, ._loopBreak): return true
         default: return false

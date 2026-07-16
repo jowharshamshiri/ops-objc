@@ -72,7 +72,17 @@ public final class BatchOp<T: Sendable>: @unchecked Sendable {
                     errors.append((index, err))
                 } else {
                     await rollbackSucceededOps(succeeded, dry: dry, wet: wet)
-                    throw OpError.batchFailed("Op \(index)-\(op.metadata().name) failed: \(err.description)")
+                    // A classified child failure keeps its declared identity
+                    // through the batch wrap (docs/failure-taxonomy.md) —
+                    // the wrap enriches the human chain only.
+                    let chain = "Op \(index)-\(op.metadata().name) failed: \(err.description)"
+                    if let code = err.failureCode {
+                        throw OpError.wrappedClassified(
+                            chain: chain, code: code,
+                            failureClass: err.failureClass, reason: err.failureReason
+                        )
+                    }
+                    throw OpError.batchFailed(chain)
                 }
             } catch {
                 let opErr = OpError.other(error as! any Error & Sendable)

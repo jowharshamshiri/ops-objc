@@ -76,4 +76,75 @@ final class OpErrorTests: XCTestCase {
             XCTFail("expected other variant")
         }
     }
+
+    // TEST1730: the wire vocabulary round-trips exactly and rejects
+    // unknowns. (mirrors Rust ops/src/failure.rs TEST1730)
+    func test1730_failure_class_wire_tokens_round_trip() {
+        for klass in FailureClass.allCases {
+            XCTAssertEqual(FailureClass(rawValue: klass.rawValue), klass)
+        }
+        XCTAssertNil(FailureClass(rawValue: "user-error"))
+        XCTAssertNil(FailureClass(rawValue: ""))
+    }
+
+    // TEST1731: only input is permanent — the retry machinery keys on this.
+    // (mirrors Rust ops/src/failure.rs TEST1731)
+    func test1731_only_input_is_permanent() {
+        XCTAssertTrue(FailureClass.input.isPermanent)
+        XCTAssertFalse(FailureClass.resource.isPermanent)
+        XCTAssertFalse(FailureClass.environment.isPermanent)
+        XCTAssertFalse(FailureClass.internal.isPermanent)
+    }
+
+    // TEST1901: classified variants carry the emit source's identity through
+    // the accessors; unclassified variants are internal with no code — the
+    // taxonomy's own rule (docs/failure-taxonomy.md).
+    // (mirrors Rust ops/src/error.rs TEST1901)
+    func test1901_classified_accessors() {
+        let classified = OpError.classified(
+            code: "CONTEXT_OVERFLOW", failureClass: .input, message: "prompt too large")
+        XCTAssertEqual(classified.failureClass, .input)
+        XCTAssertEqual(classified.failureCode, "CONTEXT_OVERFLOW")
+        XCTAssertEqual(classified.failureReason, "prompt too large")
+        XCTAssertEqual(classified.description, "CONTEXT_OVERFLOW: prompt too large")
+
+        let wrapped = OpError.wrappedClassified(
+            chain: "Op 3-generate failed: CONTEXT_OVERFLOW: prompt too large",
+            code: "CONTEXT_OVERFLOW", failureClass: .input, reason: "prompt too large")
+        XCTAssertEqual(wrapped.failureReason, "prompt too large",
+                       "the reason is the LEAF message, not the wrap chain")
+        XCTAssertEqual(wrapped.description,
+                       "Op 3-generate failed: CONTEXT_OVERFLOW: prompt too large")
+
+        let plain = OpError.executionFailed("boom")
+        XCTAssertEqual(plain.failureClass, .internal)
+        XCTAssertNil(plain.failureCode)
+    }
+
+    // TEST1903: wrapping preserves a classified failure's identity — the
+    // wrap enriches the human CHAIN only, never the class/code/reason
+    // (docs/failure-taxonomy.md). (mirrors Rust ops/src/ops.rs TEST1903)
+    func test1903_wrap_preserves_classification() {
+        let wrapped = wrapNestedOpException(
+            "GenerateOp",
+            error: .classified(code: "CONTEXT_OVERFLOW", failureClass: .input, message: "prompt too large"))
+        guard case .wrappedClassified(let chain, let code, let failureClass, let reason) = wrapped else {
+            XCTFail("expected wrappedClassified, got \(wrapped)")
+            return
+        }
+        XCTAssertTrue(chain.contains("GenerateOp"), "the wrap names the op")
+        XCTAssertEqual(code, "CONTEXT_OVERFLOW")
+        XCTAssertEqual(failureClass, .input)
+        XCTAssertEqual(reason, "prompt too large")
+
+        let rewrapped = wrapNestedOpException("OuterBatch", error: wrapped)
+        guard case .wrappedClassified(let chain2, let code2, let class2, let reason2) = rewrapped else {
+            XCTFail("expected wrappedClassified after re-wrap, got \(rewrapped)")
+            return
+        }
+        XCTAssertTrue(chain2.contains("OuterBatch") && chain2.contains("GenerateOp"))
+        XCTAssertEqual(code2, "CONTEXT_OVERFLOW")
+        XCTAssertEqual(class2, .input)
+        XCTAssertEqual(reason2, "prompt too large")
+    }
 }
