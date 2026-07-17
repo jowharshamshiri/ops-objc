@@ -1,8 +1,8 @@
 # Swift/ObjC Test Catalog
 
-**Total Tests:** 105
+**Total Tests:** 109
 
-**Numbered Tests:** 105
+**Numbered Tests:** 109
 
 **Unnumbered Tests:** 0
 
@@ -121,11 +121,15 @@ This catalog lists all tests in the Swift/ObjC codebase.
 | test0113 | `test0113_loop_op_break_terminates_loop` | TEST0113: Run a LoopOp where an op sets the break flag via context and verify the loop terminates early | Tests/OpsTests/LoopOpTests.swift:177 |
 | test0114 | `test0114_loop_op_continue_on_error_skips_failed_iterations` | TEST0114: Run LoopOp with continueOnError where an op fails and verify the loop continues | Tests/OpsTests/LoopOpTests.swift:204 |
 | test0115 | `test0115_loop_op_with_no_ops_produces_no_results` | TEST0115: Run an empty LoopOp with a non-zero limit and verify it produces no results | Tests/OpsTests/LoopOpTests.swift:333 |
+| test1730 | `test1730_failure_class_wire_tokens_round_trip` | TEST1730: the wire vocabulary round-trips exactly and rejects unknowns. (mirrors Rust ops/src/failure.rs TEST1730) | Tests/OpsTests/OpErrorTests.swift:82 |
+| test1731 | `test1731_only_input_is_permanent` | TEST1731: only input is permanent — the retry machinery keys on this. (mirrors Rust ops/src/failure.rs TEST1731) | Tests/OpsTests/OpErrorTests.swift:92 |
+| test1901 | `test1901_classified_accessors` | TEST1901: classified variants carry the emit source's identity through the accessors; unclassified variants are internal with no code — the taxonomy's own rule (docs/failure-taxonomy.md). (mirrors Rust ops/src/error.rs TEST1901) | Tests/OpsTests/OpErrorTests.swift:103 |
+| test1903 | `test1903_wrap_preserves_classification` | TEST1903: wrapping preserves a classified failure's identity — the wrap enriches the human CHAIN only, never the class/code/reason (docs/failure-taxonomy.md). (mirrors Rust ops/src/ops.rs TEST1903) | Tests/OpsTests/OpErrorTests.swift:127 |
 ---
 
 *Generated from Swift/ObjC source tree*
-*Total tests: 105*
-*Total numbered tests: 105*
+*Total tests: 109*
+*Total numbered tests: 109*
 *Total unnumbered tests: 0*
 *Total numbered tests missing descriptions: 0*
 *Total numbering mismatches: 0*
