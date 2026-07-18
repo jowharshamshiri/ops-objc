@@ -11,7 +11,7 @@ public enum OpError: Error, CustomStringConvertible, Sendable {
     /// identity instead of flattening it into prose. `chain` is the wrapping
     /// text (which op, which index) for humans; code/class/reason are the
     /// origin's, verbatim. (matches Rust OpError::WrappedClassified)
-    case wrappedClassified(chain: String, code: String, failureClass: FailureClass, reason: String)
+    case wrappedClassified(chain: String, code: String, failureClass: FailureClass, reason: String, argUrn: String?)
     case aborted(String)
     case trigger(String)
     /// A failure carrying its FULL identity from the emit source: the
@@ -20,7 +20,7 @@ public enum OpError: Error, CustomStringConvertible, Sendable {
     /// layers construct `.wrappedClassified` from classified origins instead
     /// of folding everything into prose; the engine's run record and retry
     /// policy read it structurally. (matches Rust OpError::Classified)
-    case classified(code: String, failureClass: FailureClass, message: String)
+    case classified(code: String, failureClass: FailureClass, message: String, argUrn: String?)
     case other(any Error & Sendable)
 
     /// Internal control-flow signals used by LoopOp. Never escape to callers.
@@ -41,9 +41,9 @@ public enum OpError: Error, CustomStringConvertible, Sendable {
             return "Op aborted: \(msg)"
         case .trigger(let msg):
             return "Trigger error: \(msg)"
-        case .wrappedClassified(let chain, _, _, _):
+        case .wrappedClassified(let chain, _, _, _, _):
             return chain
-        case .classified(let code, _, let message):
+        case .classified(let code, _, let message, _):
             return "\(code): \(message)"
         case .other(let err):
             return describeError(err)
@@ -60,9 +60,9 @@ public enum OpError: Error, CustomStringConvertible, Sendable {
     /// (matches Rust OpError::failure_class)
     public var failureClass: FailureClass {
         switch self {
-        case .classified(_, let failureClass, _):
+        case .classified(_, let failureClass, _, _):
             return failureClass
-        case .wrappedClassified(_, _, let failureClass, _):
+        case .wrappedClassified(_, _, let failureClass, _, _):
             return failureClass
         default:
             return .internal
@@ -73,10 +73,22 @@ public enum OpError: Error, CustomStringConvertible, Sendable {
     /// failure carried one. (matches Rust OpError::failure_code)
     public var failureCode: String? {
         switch self {
-        case .classified(let code, _, _):
+        case .classified(let code, _, _, _):
             return code
-        case .wrappedClassified(_, let code, _, _):
+        case .wrappedClassified(_, let code, _, _, _):
             return code
+        default:
+            return nil
+        }
+    }
+
+    /// Media URN of the argument attributed by the emit source, when any.
+    /// Wrapping layers preserve this verbatim and never infer one.
+    public var failureArgUrn: String? {
+        switch self {
+        case .classified(_, _, _, let argUrn),
+             .wrappedClassified(_, _, _, _, let argUrn):
+            return argUrn
         default:
             return nil
         }
@@ -87,9 +99,9 @@ public enum OpError: Error, CustomStringConvertible, Sendable {
     /// (matches Rust OpError::failure_reason)
     public var failureReason: String {
         switch self {
-        case .classified(_, _, let message):
+        case .classified(_, _, let message, _):
             return message
-        case .wrappedClassified(_, _, _, let reason):
+        case .wrappedClassified(_, _, _, let reason, _):
             return reason
         default:
             return description
@@ -117,10 +129,10 @@ extension OpError: Equatable {
         case (.batchFailed(let a), .batchFailed(let b)): return a == b
         case (.aborted(let a), .aborted(let b)): return a == b
         case (.trigger(let a), .trigger(let b)): return a == b
-        case (.classified(let ac, let al, let am), .classified(let bc, let bl, let bm)):
-            return ac == bc && al == bl && am == bm
-        case (.wrappedClassified(let ah, let ac, let al, let ar), .wrappedClassified(let bh, let bc, let bl, let br)):
-            return ah == bh && ac == bc && al == bl && ar == br
+        case (.classified(let ac, let al, let am, let aa), .classified(let bc, let bl, let bm, let ba)):
+            return ac == bc && al == bl && am == bm && aa == ba
+        case (.wrappedClassified(let ah, let ac, let al, let ar, let aa), .wrappedClassified(let bh, let bc, let bl, let br, let ba)):
+            return ah == bh && ac == bc && al == bl && ar == br && aa == ba
         case (._loopContinue, ._loopContinue): return true
         case (._loopBreak, ._loopBreak): return true
         default: return false

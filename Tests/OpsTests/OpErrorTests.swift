@@ -102,19 +102,22 @@ final class OpErrorTests: XCTestCase {
     // (mirrors Rust ops/src/error.rs TEST1901)
     func test1901_classified_accessors() {
         let classified = OpError.classified(
-            code: "CONTEXT_OVERFLOW", failureClass: .input, message: "prompt too large")
+            code: "CONTEXT_OVERFLOW", failureClass: .input, message: "prompt too large",
+            argUrn: "media:enc=utf-8;prompt")
         XCTAssertEqual(classified.failureClass, .input)
         XCTAssertEqual(classified.failureCode, "CONTEXT_OVERFLOW")
         XCTAssertEqual(classified.failureReason, "prompt too large")
+        XCTAssertEqual(classified.failureArgUrn, "media:enc=utf-8;prompt")
         XCTAssertEqual(classified.description, "CONTEXT_OVERFLOW: prompt too large")
 
         let wrapped = OpError.wrappedClassified(
             chain: "Op 3-generate failed: CONTEXT_OVERFLOW: prompt too large",
-            code: "CONTEXT_OVERFLOW", failureClass: .input, reason: "prompt too large")
+            code: "CONTEXT_OVERFLOW", failureClass: .input, reason: "prompt too large", argUrn: nil)
         XCTAssertEqual(wrapped.failureReason, "prompt too large",
                        "the reason is the LEAF message, not the wrap chain")
         XCTAssertEqual(wrapped.description,
                        "Op 3-generate failed: CONTEXT_OVERFLOW: prompt too large")
+        XCTAssertNil(wrapped.failureArgUrn)
 
         let plain = OpError.executionFailed("boom")
         XCTAssertEqual(plain.failureClass, .internal)
@@ -127,8 +130,9 @@ final class OpErrorTests: XCTestCase {
     func test1903_wrap_preserves_classification() {
         let wrapped = wrapNestedOpException(
             "GenerateOp",
-            error: .classified(code: "CONTEXT_OVERFLOW", failureClass: .input, message: "prompt too large"))
-        guard case .wrappedClassified(let chain, let code, let failureClass, let reason) = wrapped else {
+            error: .classified(code: "CONTEXT_OVERFLOW", failureClass: .input,
+                               message: "prompt too large", argUrn: "media:enc=utf-8;prompt"))
+        guard case .wrappedClassified(let chain, let code, let failureClass, let reason, let argUrn) = wrapped else {
             XCTFail("expected wrappedClassified, got \(wrapped)")
             return
         }
@@ -136,9 +140,10 @@ final class OpErrorTests: XCTestCase {
         XCTAssertEqual(code, "CONTEXT_OVERFLOW")
         XCTAssertEqual(failureClass, .input)
         XCTAssertEqual(reason, "prompt too large")
+        XCTAssertEqual(argUrn, "media:enc=utf-8;prompt")
 
         let rewrapped = wrapNestedOpException("OuterBatch", error: wrapped)
-        guard case .wrappedClassified(let chain2, let code2, let class2, let reason2) = rewrapped else {
+        guard case .wrappedClassified(let chain2, let code2, let class2, let reason2, let argUrn2) = rewrapped else {
             XCTFail("expected wrappedClassified after re-wrap, got \(rewrapped)")
             return
         }
@@ -146,5 +151,6 @@ final class OpErrorTests: XCTestCase {
         XCTAssertEqual(code2, "CONTEXT_OVERFLOW")
         XCTAssertEqual(class2, .input)
         XCTAssertEqual(reason2, "prompt too large")
+        XCTAssertEqual(argUrn2, "media:enc=utf-8;prompt")
     }
 }

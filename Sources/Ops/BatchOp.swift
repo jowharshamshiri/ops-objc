@@ -79,7 +79,8 @@ public final class BatchOp<T: Sendable>: @unchecked Sendable {
                     if let code = err.failureCode {
                         throw OpError.wrappedClassified(
                             chain: chain, code: code,
-                            failureClass: err.failureClass, reason: err.failureReason
+                            failureClass: err.failureClass, reason: err.failureReason,
+                            argUrn: err.failureArgUrn
                         )
                     }
                     throw OpError.batchFailed(chain)
