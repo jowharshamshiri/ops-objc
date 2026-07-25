@@ -11,7 +11,7 @@ public enum OpError: Error, CustomStringConvertible, Sendable {
     /// identity instead of flattening it into prose. `chain` is the wrapping
     /// text (which op, which index) for humans; code/class/reason are the
     /// origin's, verbatim. (matches Rust OpError::WrappedClassified)
-    case wrappedClassified(chain: String, code: String, failureClass: FailureClass, reason: String, argUrn: String?)
+    case wrappedClassified(chain: String, code: String, attributionClass: AttributionClass, reason: String, argUrn: String?)
     case aborted(String)
     case trigger(String)
     /// A failure carrying its FULL identity from the emit source: the
@@ -20,7 +20,7 @@ public enum OpError: Error, CustomStringConvertible, Sendable {
     /// layers construct `.wrappedClassified` from classified origins instead
     /// of folding everything into prose; the engine's run record and retry
     /// policy read it structurally. (matches Rust OpError::Classified)
-    case classified(code: String, failureClass: FailureClass, message: String, argUrn: String?)
+    case classified(code: String, attributionClass: AttributionClass, message: String, argUrn: String?)
     case other(any Error & Sendable)
 
     /// Internal control-flow signals used by LoopOp. Never escape to callers.
@@ -57,13 +57,13 @@ public enum OpError: Error, CustomStringConvertible, Sendable {
     /// The failure class this error DECLARES. Classified variants carry
     /// their origin's declaration; everything else is `.internal` —
     /// unclassified means "ours", never a guess (docs/failure-taxonomy.md).
-    /// (matches Rust OpError::failure_class)
-    public var failureClass: FailureClass {
+    /// (matches Rust OpError::attribution_class)
+    public var attributionClass: AttributionClass {
         switch self {
-        case .classified(_, let failureClass, _, _):
-            return failureClass
-        case .wrappedClassified(_, _, let failureClass, _, _):
-            return failureClass
+        case .classified(_, let attributionClass, _, _):
+            return attributionClass
+        case .wrappedClassified(_, _, let attributionClass, _, _):
+            return attributionClass
         default:
             return .internal
         }

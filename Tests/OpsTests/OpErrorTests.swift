@@ -79,21 +79,21 @@ final class OpErrorTests: XCTestCase {
 
     // TEST1730: the wire vocabulary round-trips exactly and rejects
     // unknowns. (mirrors Rust ops/src/failure.rs TEST1730)
-    func test1730_failure_class_wire_tokens_round_trip() {
-        for klass in FailureClass.allCases {
-            XCTAssertEqual(FailureClass(rawValue: klass.rawValue), klass)
+    func test1730_attribution_class_wire_tokens_round_trip() {
+        for klass in AttributionClass.allCases {
+            XCTAssertEqual(AttributionClass(rawValue: klass.rawValue), klass)
         }
-        XCTAssertNil(FailureClass(rawValue: "user-error"))
-        XCTAssertNil(FailureClass(rawValue: ""))
+        XCTAssertNil(AttributionClass(rawValue: "user-error"))
+        XCTAssertNil(AttributionClass(rawValue: ""))
     }
 
     // TEST1731: only input is permanent — the retry machinery keys on this.
     // (mirrors Rust ops/src/failure.rs TEST1731)
     func test1731_only_input_is_permanent() {
-        XCTAssertTrue(FailureClass.input.isPermanent)
-        XCTAssertFalse(FailureClass.resource.isPermanent)
-        XCTAssertFalse(FailureClass.environment.isPermanent)
-        XCTAssertFalse(FailureClass.internal.isPermanent)
+        XCTAssertTrue(AttributionClass.input.isPermanent)
+        XCTAssertFalse(AttributionClass.resource.isPermanent)
+        XCTAssertFalse(AttributionClass.environment.isPermanent)
+        XCTAssertFalse(AttributionClass.internal.isPermanent)
     }
 
     // TEST1901: classified variants carry the emit source's identity through
@@ -102,9 +102,9 @@ final class OpErrorTests: XCTestCase {
     // (mirrors Rust ops/src/error.rs TEST1901)
     func test1901_classified_accessors() {
         let classified = OpError.classified(
-            code: "CONTEXT_OVERFLOW", failureClass: .input, message: "prompt too large",
+            code: "CONTEXT_OVERFLOW", attributionClass: .input, message: "prompt too large",
             argUrn: "media:enc=utf-8;prompt")
-        XCTAssertEqual(classified.failureClass, .input)
+        XCTAssertEqual(classified.attributionClass, .input)
         XCTAssertEqual(classified.failureCode, "CONTEXT_OVERFLOW")
         XCTAssertEqual(classified.failureReason, "prompt too large")
         XCTAssertEqual(classified.failureArgUrn, "media:enc=utf-8;prompt")
@@ -112,7 +112,7 @@ final class OpErrorTests: XCTestCase {
 
         let wrapped = OpError.wrappedClassified(
             chain: "Op 3-generate failed: CONTEXT_OVERFLOW: prompt too large",
-            code: "CONTEXT_OVERFLOW", failureClass: .input, reason: "prompt too large", argUrn: nil)
+            code: "CONTEXT_OVERFLOW", attributionClass: .input, reason: "prompt too large", argUrn: nil)
         XCTAssertEqual(wrapped.failureReason, "prompt too large",
                        "the reason is the LEAF message, not the wrap chain")
         XCTAssertEqual(wrapped.description,
@@ -120,7 +120,7 @@ final class OpErrorTests: XCTestCase {
         XCTAssertNil(wrapped.failureArgUrn)
 
         let plain = OpError.executionFailed("boom")
-        XCTAssertEqual(plain.failureClass, .internal)
+        XCTAssertEqual(plain.attributionClass, .internal)
         XCTAssertNil(plain.failureCode)
     }
 
@@ -130,15 +130,15 @@ final class OpErrorTests: XCTestCase {
     func test1903_wrap_preserves_classification() {
         let wrapped = wrapNestedOpException(
             "GenerateOp",
-            error: .classified(code: "CONTEXT_OVERFLOW", failureClass: .input,
+            error: .classified(code: "CONTEXT_OVERFLOW", attributionClass: .input,
                                message: "prompt too large", argUrn: "media:enc=utf-8;prompt"))
-        guard case .wrappedClassified(let chain, let code, let failureClass, let reason, let argUrn) = wrapped else {
+        guard case .wrappedClassified(let chain, let code, let attributionClass, let reason, let argUrn) = wrapped else {
             XCTFail("expected wrappedClassified, got \(wrapped)")
             return
         }
         XCTAssertTrue(chain.contains("GenerateOp"), "the wrap names the op")
         XCTAssertEqual(code, "CONTEXT_OVERFLOW")
-        XCTAssertEqual(failureClass, .input)
+        XCTAssertEqual(attributionClass, .input)
         XCTAssertEqual(reason, "prompt too large")
         XCTAssertEqual(argUrn, "media:enc=utf-8;prompt")
 
