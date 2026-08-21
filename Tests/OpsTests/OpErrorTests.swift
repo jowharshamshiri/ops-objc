@@ -87,10 +87,12 @@ final class OpErrorTests: XCTestCase {
         XCTAssertNil(AttributionClass(rawValue: ""))
     }
 
-    // TEST1731: only input is permanent — the retry machinery keys on this.
-    // (mirrors Rust ops/src/failure.rs TEST1731)
-    func test1731_only_input_is_permanent() {
+    // TEST1731: input and user are permanent — the retry machinery keys on
+    // this (a deterministic input failure, or a human's decision, is never
+    // retried automatically). (mirrors Rust ops/src/failure.rs TEST1731)
+    func test1731_only_input_and_user_are_permanent() {
         XCTAssertTrue(AttributionClass.input.isPermanent)
+        XCTAssertTrue(AttributionClass.user.isPermanent)
         XCTAssertFalse(AttributionClass.resource.isPermanent)
         XCTAssertFalse(AttributionClass.environment.isPermanent)
         XCTAssertFalse(AttributionClass.internal.isPermanent)

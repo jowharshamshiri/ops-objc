@@ -23,11 +23,16 @@ public enum AttributionClass: String, Sendable, CaseIterable, Equatable {
     /// Everything else: a defect in the engine or a cartridge. Ours, said
     /// plainly. Retryable (races un-race), but never blamed on the user.
     case `internal`
+    /// The USER decided it: an operator cancelled the run. Not a failure at
+    /// all; never retried automatically, never a defect, and the one class
+    /// under which "cancelled" is the truth.
+    case user
 
     /// Whether retrying can NEVER succeed: the failure is a deterministic
-    /// function of the input. Resource/environment/internal stay retryable
-    /// (memory frees up, networks recover, races un-race).
+    /// function of the input, or the user chose to end it.
+    /// Resource/environment/internal stay retryable (memory frees up,
+    /// networks recover, races un-race).
     public var isPermanent: Bool {
-        return self == .input
+        return self == .input || self == .user
     }
 }
