@@ -105,25 +105,28 @@ final class OpErrorTests: XCTestCase {
     func test1901_classified_accessors() {
         let classified = OpError.classified(
             code: "CONTEXT_OVERFLOW", attributionClass: .input, message: "prompt too large",
-            argUrn: "media:enc=utf-8;prompt")
+            argUrn: "media:enc=utf-8;prompt", hint: "shorten the prompt")
         XCTAssertEqual(classified.attributionClass, .input)
         XCTAssertEqual(classified.failureCode, "CONTEXT_OVERFLOW")
         XCTAssertEqual(classified.failureReason, "prompt too large")
         XCTAssertEqual(classified.failureArgUrn, "media:enc=utf-8;prompt")
+        XCTAssertEqual(classified.failureHint, "shorten the prompt")
         XCTAssertEqual(classified.description, "CONTEXT_OVERFLOW: prompt too large")
 
         let wrapped = OpError.wrappedClassified(
             chain: "Op 3-generate failed: CONTEXT_OVERFLOW: prompt too large",
-            code: "CONTEXT_OVERFLOW", attributionClass: .input, reason: "prompt too large", argUrn: nil)
+            code: "CONTEXT_OVERFLOW", attributionClass: .input, reason: "prompt too large", argUrn: nil, hint: nil)
         XCTAssertEqual(wrapped.failureReason, "prompt too large",
                        "the reason is the LEAF message, not the wrap chain")
         XCTAssertEqual(wrapped.description,
                        "Op 3-generate failed: CONTEXT_OVERFLOW: prompt too large")
         XCTAssertNil(wrapped.failureArgUrn)
+        XCTAssertNil(wrapped.failureHint, "no hint declared means none served — never guessed")
 
         let plain = OpError.executionFailed("boom")
         XCTAssertEqual(plain.attributionClass, .internal)
         XCTAssertNil(plain.failureCode)
+        XCTAssertNil(plain.failureHint)
     }
 
     // TEST1903: wrapping preserves a classified failure's identity — the
@@ -133,8 +136,8 @@ final class OpErrorTests: XCTestCase {
         let wrapped = wrapNestedOpException(
             "GenerateOp",
             error: .classified(code: "CONTEXT_OVERFLOW", attributionClass: .input,
-                               message: "prompt too large", argUrn: "media:enc=utf-8;prompt"))
-        guard case .wrappedClassified(let chain, let code, let attributionClass, let reason, let argUrn) = wrapped else {
+                               message: "prompt too large", argUrn: "media:enc=utf-8;prompt", hint: nil))
+        guard case .wrappedClassified(let chain, let code, let attributionClass, let reason, let argUrn, _) = wrapped else {
             XCTFail("expected wrappedClassified, got \(wrapped)")
             return
         }
@@ -145,7 +148,7 @@ final class OpErrorTests: XCTestCase {
         XCTAssertEqual(argUrn, "media:enc=utf-8;prompt")
 
         let rewrapped = wrapNestedOpException("OuterBatch", error: wrapped)
-        guard case .wrappedClassified(let chain2, let code2, let class2, let reason2, let argUrn2) = rewrapped else {
+        guard case .wrappedClassified(let chain2, let code2, let class2, let reason2, let argUrn2, _) = rewrapped else {
             XCTFail("expected wrappedClassified after re-wrap, got \(rewrapped)")
             return
         }
@@ -154,5 +157,31 @@ final class OpErrorTests: XCTestCase {
         XCTAssertEqual(class2, .input)
         XCTAssertEqual(reason2, "prompt too large")
         XCTAssertEqual(argUrn2, "media:enc=utf-8;prompt")
+    }
+
+    // TEST1904: the emit source's hint — its next step for the user — is
+    // carried verbatim through wrapping and re-wrapping, and a failure that
+    // declared none stays without one: wrapping never supplies a hint.
+    // (mirrors Rust ops/src/ops.rs TEST1904)
+    func test1904_wrap_carries_hint() {
+        let refusal = OpError.classified(
+            code: "NO_HANDLER", attributionClass: .environment,
+            message: "cartridge ggufcartridge is not installed",
+            argUrn: nil, hint: "capdag cartridge install ggufcartridge")
+        let wrapped = wrapNestedOpException("PeerCallOp", error: refusal)
+        XCTAssertEqual(wrapped.failureHint, "capdag cartridge install ggufcartridge",
+                       "the origin's next step survives wrapping verbatim")
+        let rewrapped = wrapNestedOpException("SummarizeOp", error: wrapped)
+        XCTAssertTrue(rewrapped.description.contains("SummarizeOp"))
+        XCTAssertEqual(rewrapped.failureHint, "capdag cartridge install ggufcartridge",
+                       "re-wrapping keeps the origin's next step")
+
+        let unhinted = OpError.classified(
+            code: "NO_HANDLER", attributionClass: .environment,
+            message: "no handler for the cap", argUrn: nil, hint: nil)
+        let unhintedRewrapped = wrapNestedOpException(
+            "SummarizeOp", error: wrapNestedOpException("PeerCallOp", error: unhinted))
+        XCTAssertNil(unhintedRewrapped.failureHint,
+                     "no hint declared means none served through any wrapping")
     }
 }

@@ -370,4 +370,54 @@ final class BatchOpTests: XCTestCase {
         let results = try await batch.perform(dry: dry, wet: wet)
         XCTAssertEqual(results, [10, 20])
     }
+
+    // TEST1905: a batch whose child fails with a classified refusal carries
+    // the child's hint through its own wrap, and through an outer batch;
+    // a child that declared none gives the batch no hint.
+    // (mirrors Rust ops/src/batch.rs TEST1905)
+    func test1905_batch_carries_child_hint() async {
+        struct RefusingOp: Op {
+            typealias Output = Int
+            let hint: String?
+            func perform(dry: DryContext, wet: WetContext) async throws -> Int {
+                throw OpError.classified(
+                    code: "NO_HANDLER", attributionClass: .environment,
+                    message: "cartridge ggufcartridge is not installed", argUrn: nil, hint: hint)
+            }
+            func metadata() -> OpMetadata { OpMetadata.builder("RefusingOp").build() }
+        }
+        struct InnerBatchOp: Op {
+            typealias Output = [Int]
+            let batch: BatchOp<Int>
+            func perform(dry: DryContext, wet: WetContext) async throws -> [Int] {
+                try await batch.perform(dry: dry, wet: wet)
+            }
+            func metadata() -> OpMetadata { OpMetadata.builder("InnerBatchOp").build() }
+        }
+
+        let inner = BatchOp(ops: [AnyOp(RefusingOp(hint: "capdag cartridge install ggufcartridge"))])
+        let outer = BatchOp(ops: [AnyOp(InnerBatchOp(batch: inner))])
+        let dry = DryContext(); let wet = WetContext()
+        do {
+            _ = try await outer.perform(dry: dry, wet: wet)
+            XCTFail("Expected the child's refusal")
+        } catch let error as OpError {
+            XCTAssertEqual(error.failureCode, "NO_HANDLER")
+            XCTAssertEqual(error.failureHint, "capdag cartridge install ggufcartridge",
+                           "the child's next step survives both batch wraps verbatim")
+        } catch {
+            XCTFail("Expected OpError, got: \(error)")
+        }
+
+        let unhinted = BatchOp(ops: [AnyOp(RefusingOp(hint: nil))])
+        do {
+            _ = try await unhinted.perform(dry: dry, wet: wet)
+            XCTFail("Expected the child's refusal")
+        } catch let error as OpError {
+            XCTAssertEqual(error.failureCode, "NO_HANDLER")
+            XCTAssertNil(error.failureHint, "a child that declared no hint gives the batch none")
+        } catch {
+            XCTFail("Expected OpError, got: \(error)")
+        }
+    }
 }

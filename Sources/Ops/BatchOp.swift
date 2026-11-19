@@ -80,7 +80,7 @@ public final class BatchOp<T: Sendable>: @unchecked Sendable {
                         throw OpError.wrappedClassified(
                             chain: chain, code: code,
                             attributionClass: err.attributionClass, reason: err.failureReason,
-                            argUrn: err.failureArgUrn
+                            argUrn: err.failureArgUrn, hint: err.failureHint
                         )
                     }
                     throw OpError.batchFailed(chain)

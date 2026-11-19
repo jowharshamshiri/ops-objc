@@ -39,15 +39,15 @@ public func wrapNestedOpException(_ triggerName: String, error: OpError) -> OpEr
     // Classified failures keep their identity through wrapping — the wrap
     // adds human context to the CHAIN, never touches class/code/reason
     // (docs/failure-taxonomy.md).
-    case .wrappedClassified(let chain, let code, let attributionClass, let reason, let argUrn):
+    case .wrappedClassified(let chain, let code, let attributionClass, let reason, let argUrn, let hint):
         return .wrappedClassified(
             chain: "Batch op '\(triggerName)' failed: \(chain)",
-            code: code, attributionClass: attributionClass, reason: reason, argUrn: argUrn
+            code: code, attributionClass: attributionClass, reason: reason, argUrn: argUrn, hint: hint
         )
-    case .classified(let code, let attributionClass, let message, let argUrn):
+    case .classified(let code, let attributionClass, let message, let argUrn, let hint):
         return .wrappedClassified(
             chain: "Op '\(triggerName)' failed: \(code): \(message)",
-            code: code, attributionClass: attributionClass, reason: message, argUrn: argUrn
+            code: code, attributionClass: attributionClass, reason: message, argUrn: argUrn, hint: hint
         )
     case .aborted(let reason):
         return .aborted("Op '\(triggerName)' aborted: \(reason)")
